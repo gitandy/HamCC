@@ -1,0 +1,40 @@
+[project]
+name = "HamCC"
+#dynamic = ["version"]
+version = "0.1"
+authors = [
+  { name="Andreas Schawo, DF1ASC", email="andreas@schawo.de" },
+]
+description = "Log Ham Radio QSOs via console"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "PyADIF-File~=1.3",
+    "windows-curses; os_name == 'nt'"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Communications :: Ham Radio",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/gitandy/HamCC"
+"Bug Tracker" = "https://github.com/gitandy/HamCC/issues"
+
+[project.scripts]
+"hamcc" = "hamcc.__main__:main"
+
+[tool.setuptools.package-data]
+hamcc = ["data/**"]
+
+#[tool.setuptools.dynamic]
+#version = {attr = "hamcc.__version__"}

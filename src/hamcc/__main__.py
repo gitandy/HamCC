@@ -1,0 +1,161 @@
+"""Log Ham Radio QSOs via console"""
+
+import os
+from curses import wrapper, window
+
+from adif_file import adi
+
+from .hamcc import CassiopeiaConsole
+
+PROMPT = 'QSO> '
+
+
+def qso2str(qso, pos, cnt):
+    d = qso["QSO_DATE"][:4] + '-' + qso["QSO_DATE"][4:6] + '-' + qso["QSO_DATE"][6:8]
+    t = qso["TIME_ON"][:2] + ':' + qso["TIME_ON"][2:4]
+
+    opt_info = ''
+    for i, f in (
+            ('.', 'RST_RCVD'),
+            (',', 'RST_SENT'),
+            ('\'', 'NAME'),
+            ('f', 'FREQ'),
+            ('p', 'TX_POWER'),
+            ('*', 'QSL_RCVD'),
+            ('#', 'COMMENT'),
+    ):
+        if f in qso:
+            opt_info += f' {i} {qso[f]} |'
+
+    cntst_info = ''
+    if 'CONTEST_ID' in qso and qso["CONTEST_ID"]:
+        cntst_info = f' $ {qso["CONTEST_ID"]} | N {qso["STX"]} | % {qso["SRX_STRING"] if "SRX_STRING" in qso else ""} |'
+
+    return (f'| {"*" if pos == -1 else pos+1}/{"-" if cnt == 0 else cnt} | d {d} | t {t} | B {qso["BAND"]} | '
+            f'M {qso["MODE"]} | C {qso["CALL"]} | @ {qso["GRIDSQUARE"]} |{cntst_info}{opt_info}')
+
+
+def command_console(stdscr: window, file, own_call, own_loc, own_name, append=False):
+    cc = CassiopeiaConsole(own_call, own_loc, own_name)
+
+    fmode = 'a' if append else 'w'
+    fexists = os.path.isfile(file)
+    adi_f = open(file, fmode)
+
+    if not append or not fexists:
+        adi_header = {
+            'HEADER': {
+                'PROGRAMID': 'hamcc',
+                'PROGRAMVERSION': 'v0.1',
+            }}
+
+        adi_f.write(adi.dumps(adi_header, comment='ADIF export by hamcc'))
+        adi_f.flush()
+
+    # Clear screen
+    stdscr.clear()
+    stdscr.addstr(0, 0, qso2str(cc.current_qso, cc.edit_pos, 0))
+    stdscr.addstr(2, 0, f'{"Appending to" if append else "Overwriting"} "{adi_f.name}"')
+    stdscr.addstr(1, 0, PROMPT)
+
+    stdscr.refresh()
+
+    try:
+        while True:
+            py, px = stdscr.getyx()
+            stdscr.addstr(0, 0, qso2str(cc.current_qso, cc.edit_pos, len(cc.qsos)))
+            stdscr.clrtoeol()
+            stdscr.addstr(py, px, '')
+
+            c = stdscr.getkey()
+
+            if c == 'KEY_UP':
+                cc.load_prev()
+                stdscr.addstr(2, 0, '')
+                stdscr.clrtoeol()
+                stdscr.addstr(1, 0, PROMPT)
+                stdscr.clrtoeol()
+            elif c == 'KEY_DOWN':
+                cc.load_next()
+                stdscr.addstr(2, 0, '')
+                stdscr.clrtoeol()
+                stdscr.addstr(1, 0, PROMPT)
+                stdscr.clrtoeol()
+            elif c == 'KEY_DC':
+                res = cc.del_selected()
+                if res >= 0:
+                    stdscr.addstr(2, 0, f'Deleted QSO #{res+1}')
+                else:
+                    stdscr.addstr(2, 0, '')
+                stdscr.clrtoeol()
+                stdscr.addstr(1, 0, PROMPT)
+                stdscr.clrtoeol()
+            elif len(c) > 1 or c in '\r\b\t':
+                continue
+            elif c == '\n':  # Flush QSO to stack
+                res = cc.append_char(c)
+                stdscr.addstr(2, 0, res)
+                stdscr.clrtoeol()
+                stdscr.addstr(1, 0, PROMPT)
+                stdscr.clrtoeol()
+            elif c == '!':  # Write QSOs to disk
+                cc.append_char('\n')
+                i = 0
+                msg = ''
+                while cc.has_qsos():
+                    adi_f.write('\n\n' + adi.dumps({'RECORDS': [cc.pop_qso()]}))
+                    adi_f.flush()
+                    i += 1
+                    msg = f'{i} QSO(s) written to disk'
+                stdscr.addstr(2, 0, msg)
+                stdscr.clrtoeol()
+                stdscr.addstr(1, 0, PROMPT)
+                stdscr.clrtoeol()
+            else:  # Concat sequence
+                res = cc.append_char(c)
+                stdscr.addstr(2, 0, res)
+                stdscr.clrtoeol()
+                if c in ('~', '?'):
+                    stdscr.addstr(1, 0, PROMPT)
+                    stdscr.clrtoeol()
+                else:
+                    stdscr.addstr(py, px, '')
+                    stdscr.addstr(c)
+
+    except KeyboardInterrupt:
+        while cc.has_qsos():
+            adi_f.write('\n\n' + adi.dumps({'RECORDS': [cc.pop_qso()]}))
+            adi_f.flush()
+    finally:
+        adi_f.close()
+
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Fast Ham QSO logging via console')
+
+    parser.add_argument('--version', action='version', version='v0.1',
+                        help='show version and exit')
+    parser.add_argument('file', metavar='ADIF_FILE', nargs='?',
+                        default=os.path.expanduser('~/hamcc_log.adi'),
+                        help='the file to store the QSOs')
+    parser.add_argument('-c', '--call', dest='own_call', default='',
+                        help='your callsign')
+    parser.add_argument('-l', '--locator', dest='own_loc', default='',
+                        help='your locator')
+    parser.add_argument('-n', '--name', dest='own_name', default='',
+                        help='your name')
+    parser.add_argument('-x', '--overwrite', dest='overwrite', action='store_true',
+                        help='overwriting the file instead of appending the QSOs')
+
+    args = parser.parse_args()
+
+    if os.name == 'nt':
+        os.system("mode con cols=80 lines=25")
+
+    wrapper(command_console, args.file, args.own_call, args.own_loc, args.own_name, not args.overwrite)
+
+
+if __name__ == '__main__':
+    main()

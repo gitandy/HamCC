@@ -1,0 +1,6 @@
+__pycache__
+/dist
+/temp
+/venv
+/.idea
+/src/HamCC.egg-info
