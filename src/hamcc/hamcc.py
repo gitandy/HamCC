@@ -65,11 +65,11 @@ class CassiopeiaConsole:
     REGEX_LOCATOR = re.compile(r'[a-rA-R]{2}[0-9]{2}([a-xA-X]{2}([0-9]{2})?)?')
 
     def __init__(self, my_call: str, my_loc: str, my_name: str = ''):
-        if my_call and not self.check_format(self.REGEX_CALL, my_call):
+        if not my_call or not self.check_format(self.REGEX_CALL, my_call):
             raise Exception('Wrong call format')
         self.__my_call__ = my_call
 
-        if my_loc and not self.check_format(self.REGEX_LOCATOR, my_loc):
+        if not my_loc or not self.check_format(self.REGEX_LOCATOR, my_loc):
             raise Exception('Wrong locator format')
         self.__my_loc__ = my_loc
 
@@ -315,14 +315,22 @@ class CassiopeiaConsole:
             if 'RST_SENT' in self.__cur_qso__:
                 self.__cur_qso__.pop('RST_SENT')
 
+    @staticmethod
+    def isnumeric(number: str) -> bool:
+        for d in number:
+            if d not in '-0123456789':
+                return False
+
+        return True
+
     def evaluate(self, seq: str) -> str:
         if seq:
             self.__qso_active__ = True
 
-            if seq.endswith('m') and seq.lower() in BANDS:
+            if seq.lower().endswith('m') and seq.lower() in BANDS:
                 self.__band__ = seq.lower()
                 self.__cur_qso__['BAND'] = self.__band__
-            elif seq.isnumeric() and 0 < len(seq) < 3:
+            elif self.isnumeric(seq) and 0 < len(seq) < 3:
                 if seq in self.BANDS_HOSTI:
                     self.__band__ = self.BANDS_HOSTI[seq.lower()]
                     self.__cur_qso__['BAND'] = self.__band__
