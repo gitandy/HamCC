@@ -4,7 +4,9 @@ import os
 from curses import wrapper, window
 
 from adif_file import adi
+from adif_file import __version_str__ as __version_adif_file__
 
+from . import __proj_name__, __version_str__, __author_name__, __copyright__
 from .hamcc import CassiopeiaConsole
 
 PROMPT = 'QSO> '
@@ -133,9 +135,12 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='Fast Ham QSO logging via console')
+    parser = argparse.ArgumentParser(description='Log Ham Radio QSOs via console',
+                                     formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     epilog=f'Author: {__author_name__}\n{__copyright__}')
 
-    parser.add_argument('--version', action='version', version='v0.1',
+    parser.add_argument('--version', action='version',
+                        version=f'{__proj_name__}: {__version_str__}\nPyADIF-File: {__version_adif_file__}',
                         help='show version and exit')
     parser.add_argument('file', metavar='ADIF_FILE', nargs='?',
                         default=os.path.expanduser('~/hamcc_log.adi'),

@@ -1,7 +1,6 @@
 [project]
 name = "HamCC"
-#dynamic = ["version"]
-version = "0.1"
+dynamic = ["version"]
 authors = [
   { name="Andreas Schawo, DF1ASC", email="andreas@schawo.de" },
 ]
@@ -36,5 +35,5 @@ classifiers = [
 [tool.setuptools.package-data]
 hamcc = ["data/**"]
 
-#[tool.setuptools.dynamic]
-#version = {attr = "hamcc.__version__"}
+[tool.setuptools.dynamic]
+version = {attr = "hamcc.__version__"}

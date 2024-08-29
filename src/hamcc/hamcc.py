@@ -6,6 +6,8 @@ import json
 from copy import deepcopy
 import datetime
 
+from . import __proj_name__, __version_str__
+
 
 def __read_json__(file) -> list:
     try:
@@ -389,6 +391,8 @@ class CassiopeiaConsole:
                 elif seq.startswith('-n'):
                     self.__my_name__ = seq[2:].replace('_', ' ')
                     self.__cur_qso__['MY_NAME'] = self.__my_name__
+                elif seq == '-V':
+                    return f'{__proj_name__}: {__version_str__}'
             else:  # Call
                 if not self.check_format(self.REGEX_CALL, seq):
                     return 'Wrong call format'

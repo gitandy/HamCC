@@ -116,6 +116,7 @@ Types marked with auto are prefilled but can be overwritten. Types marked with m
 | Finish QSO   | linefeed        | command | ENTER-Key                   |
 | Clear QSO    | ~               | command | clears input not cached QSO |
 | Show QSO     | ?               | command |                             |
+| Show version | -V              | command |                             |
 
 For callsigns, mode, locators, RST and contest id lowercase will be converted to uppecase.
 
