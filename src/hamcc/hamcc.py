@@ -286,11 +286,15 @@ class CassiopeiaConsole:
 
     @staticmethod
     def isnumeric(number: str) -> bool:
-        for d in number:
-            if d not in '-0123456789':
-                return False
+        """Tests if the string is a valid number including sign"""
 
-        return True
+        return number[1:].isnumeric() if number.startswith('-') else number.isnumeric()
+
+    @staticmethod
+    def isdecimal(number: str) -> bool:
+        """Tests if the string is a valid decimal number with at most one decimal point"""
+
+        return not number.startswith('.') and number.replace('.', '').isnumeric() and number.count('.') <= 1
 
     def evaluate_numeric(self, seq: str) -> str:
         if seq.endswith('d'):
@@ -369,7 +373,7 @@ class CassiopeiaConsole:
                 if seq in self.BANDS_HOSTI:
                     self.__band__ = self.BANDS_HOSTI[seq.lower()]
                     self.__cur_qso__['BAND'] = self.__band__
-            elif seq[:-1].isnumeric():
+            elif self.isdecimal(seq[:-1]):
                 return self.evaluate_numeric(seq)
             elif seq.upper() in MODES:
                 self.__mode__ = seq.upper()
