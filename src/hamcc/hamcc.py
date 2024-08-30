@@ -65,11 +65,11 @@ class CassiopeiaConsole:
     REGEX_LOCATOR = re.compile(r'[a-rA-R]{2}[0-9]{2}([a-xA-X]{2}([0-9]{2})?)?')
 
     def __init__(self, my_call: str, my_loc: str, my_name: str = ''):
-        if not my_call or not self.check_format(self.REGEX_CALL, my_call):
+        if my_call and not self.check_format(self.REGEX_CALL, my_call):
             raise Exception('Wrong call format')
         self.__my_call__ = my_call
 
-        if not my_loc or not self.check_format(self.REGEX_LOCATOR, my_loc):
+        if my_loc and not self.check_format(self.REGEX_LOCATOR, my_loc):
             raise Exception('Wrong locator format')
         self.__my_loc__ = my_loc
 
