@@ -323,6 +323,40 @@ class CassiopeiaConsole:
 
         return True
 
+    def evaluate_contest(self, seq: str) -> str:
+        if len(seq) > 1:
+            if self.__contest_id__:  # Reset QSO ID for new contest
+                self.__cntstqso_id__ = 1
+            self.__contest_id__ = seq[1:].upper()
+            self.__cur_qso__['CONTEST_ID'] = self.__contest_id__
+            self.__cur_qso__['STX'] = str(self.__cntstqso_id__)
+        else:
+            self.__contest_id__ = ''
+            if 'CONTEST_ID' in self.__cur_qso__:
+                self.__cur_qso__.pop('CONTEST_ID')
+            self.__cntstqso_id__ = 0
+        return ''
+
+    def evaluate_extended(self, seq: str) -> str:
+        if seq.startswith('-c'):
+            if not self.check_format(self.REGEX_CALL, seq[2:]):
+                return 'Wrong call format'
+            self.__my_call__ = seq[2:]
+            self.__cur_qso__['STATION_CALLSIGN'] = self.__my_call__
+        elif seq.startswith('-l'):
+            if not self.check_format(self.REGEX_LOCATOR, seq[2:]):
+                return 'Wrong maidenhead format'
+            self.__my_loc__ = seq[2:]
+            self.__cur_qso__['MY_GRIDSQUARE'] = self.__my_loc__
+        elif seq.startswith('-n'):
+            self.__my_name__ = seq[2:].replace('_', ' ')
+            self.__cur_qso__['MY_NAME'] = self.__my_name__
+        elif seq == '-V':
+            return f'{__proj_name__}: {__version_str__}'
+        else:
+            return 'Unknown prefix'
+        return ''
+
     # flake8: noqa: C901
     def evaluate(self, seq: str) -> str:
         if seq:
@@ -354,17 +388,7 @@ class CassiopeiaConsole:
                     return 'Wrong maidenhead format'
                 self.__cur_qso__['GRIDSQUARE'] = seq[1:3].upper() + seq[3:]
             elif seq.startswith('$'):  # Contest ID
-                if len(seq) > 1:
-                    if self.__contest_id__:  # Reset QSO ID for new contest
-                        self.__cntstqso_id__ = 1
-                    self.__contest_id__ = seq[1:].upper()
-                    self.__cur_qso__['CONTEST_ID'] = self.__contest_id__
-                    self.__cur_qso__['STX'] = str(self.__cntstqso_id__)
-                else:
-                    self.__contest_id__ = ''
-                    if 'CONTEST_ID' in self.__cur_qso__:
-                        self.__cur_qso__.pop('CONTEST_ID')
-                    self.__cntstqso_id__ = 0
+                return self.evaluate_contest(seq)
             elif seq.startswith('%'):  # Contest received QSO id
                 if not self.__contest_id__:
                     return 'No active contest'
@@ -386,22 +410,8 @@ class CassiopeiaConsole:
                 self.__time__ = datetime.datetime.utcnow().strftime('%H%M')
                 self.__cur_qso__['QSO_DATE'] = self.__date__
                 self.__cur_qso__['TIME_ON'] = self.__time__
-            elif seq[0] == '-':  # different extended infos
-                if seq.startswith('-c'):
-                    if not self.check_format(self.REGEX_CALL, seq[2:]):
-                        return 'Wrong call format'
-                    self.__my_call__ = seq[2:]
-                    self.__cur_qso__['STATION_CALLSIGN'] = self.__my_call__
-                elif seq.startswith('-l'):
-                    if not self.check_format(self.REGEX_LOCATOR, seq[2:]):
-                        return 'Wrong maidenhead format'
-                    self.__my_loc__ = seq[2:]
-                    self.__cur_qso__['MY_GRIDSQUARE'] = self.__my_loc__
-                elif seq.startswith('-n'):
-                    self.__my_name__ = seq[2:].replace('_', ' ')
-                    self.__cur_qso__['MY_NAME'] = self.__my_name__
-                elif seq == '-V':
-                    return f'{__proj_name__}: {__version_str__}'
+            elif seq[0] == '-':  # different extended infos and commands
+                return self.evaluate_extended(seq)
             else:  # Call
                 if not self.check_format(self.REGEX_CALL, seq):
                     return 'Wrong call format'
