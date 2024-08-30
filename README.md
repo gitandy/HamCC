@@ -1,6 +1,10 @@
 HamCC - CassiopeiaConsole
 =========================
 
+[![PyPI Package](https://img.shields.io/pypi/v/hamcc?color=%2334D058&label=PyPI%20Package)](https://pypi.org/project/hamcc)
+[![Test & Lint](https://github.com/gitandy/HamCC/actions/workflows/python-test.yml/badge.svg)](https://github.com/gitandy/HamCC/actions/workflows/python-test.yml)
+[![Python versions](https://img.shields.io/pypi/pyversions/hamcc.svg?color=%2334D058&label=Python)](https://pypi.org/project/hamcc)
+
 CassiopeiaConsole or short HamCC allows to quickly type in Ham Radio QSOs via commandline sessions.
 During online QSOs, transfer handwritten logs or maybe when going through a bunch of QSO paper cards.
 
