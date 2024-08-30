@@ -268,6 +268,30 @@ class CassiopeiaConsole:
 
         return -1
 
+    def set_rst_default(self, mode):
+        rst = ''
+        if mode in ('CW',):
+            rst = '599'
+        elif mode in ('AM', 'FM', 'SSB', 'DIGITALVOICE'):
+            rst = '59'
+
+        if rst:
+            self.__cur_qso__['RST_RCVD'] = rst
+            self.__cur_qso__['RST_SENT'] = rst
+        else:
+            if 'RST_RCVD' in self.__cur_qso__:
+                self.__cur_qso__.pop('RST_RCVD')
+            if 'RST_SENT' in self.__cur_qso__:
+                self.__cur_qso__.pop('RST_SENT')
+
+    @staticmethod
+    def isnumeric(number: str) -> bool:
+        for d in number:
+            if d not in '-0123456789':
+                return False
+
+        return True
+
     def evaluate_numeric(self, seq: str) -> str:
         if seq.endswith('d'):
             d = seq[:-1]
@@ -298,30 +322,6 @@ class CassiopeiaConsole:
         else:
             return 'Unknown number format'
         return ''
-
-    def set_rst_default(self, mode):
-        rst = ''
-        if mode in ('CW',):
-            rst = '599'
-        elif mode in ('AM', 'FM', 'SSB', 'DIGITALVOICE'):
-            rst = '59'
-
-        if rst:
-            self.__cur_qso__['RST_RCVD'] = rst
-            self.__cur_qso__['RST_SENT'] = rst
-        else:
-            if 'RST_RCVD' in self.__cur_qso__:
-                self.__cur_qso__.pop('RST_RCVD')
-            if 'RST_SENT' in self.__cur_qso__:
-                self.__cur_qso__.pop('RST_SENT')
-
-    @staticmethod
-    def isnumeric(number: str) -> bool:
-        for d in number:
-            if d not in '-0123456789':
-                return False
-
-        return True
 
     def evaluate_contest(self, seq: str) -> str:
         if len(seq) > 1:
