@@ -323,6 +323,7 @@ class CassiopeiaConsole:
 
         return True
 
+    # flake8: noqa: C901
     def evaluate(self, seq: str) -> str:
         if seq:
             self.__qso_active__ = True
