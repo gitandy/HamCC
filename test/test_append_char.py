@@ -45,6 +45,10 @@ class TestCaseAppendChar(unittest.TestCase):
         self.assertEqual('', self.cc.current_qso['CALL'])
         self.assertNotIn('NAME', self.cc.current_qso)
 
+    @unittest.expectedFailure
+    def test_50_current(self):
+        self.fail('Test missing')
+
 
 if __name__ == '__main__':
     unittest.main()
