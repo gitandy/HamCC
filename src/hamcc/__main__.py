@@ -28,7 +28,10 @@ def qso2str(qso, pos, cnt):
             ('#', 'COMMENT'),
     ):
         if f in qso:
-            opt_info += f' {i} {qso[f]} |'
+            val = qso[f]
+            if f == 'FREQ':
+                val = str(float(val)*1000)
+            opt_info += f' {i} {val} |'
 
     cntst_info = ''
     if 'CONTEST_ID' in qso and qso["CONTEST_ID"]:
