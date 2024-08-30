@@ -1,6 +1,7 @@
 """Log Ham Radio QSOs via console"""
 
 import os
+import sys
 from curses import wrapper, window
 
 from adif_file import adi
@@ -38,98 +39,102 @@ def qso2str(qso, pos, cnt):
 
 
 def command_console(stdscr: window, file, own_call, own_loc, own_name, append=False):
-    cc = CassiopeiaConsole(own_call, own_loc, own_name)
-
-    fmode = 'a' if append else 'w'
-    fexists = os.path.isfile(file)
-    adi_f = open(file, fmode)
-
-    if not append or not fexists:
-        adi_header = {
-            'HEADER': {
-                'PROGRAMID': 'hamcc',
-                'PROGRAMVERSION': 'v0.1',
-            }}
-
-        adi_f.write(adi.dumps(adi_header, comment='ADIF export by hamcc'))
-        adi_f.flush()
-
-    # Clear screen
-    stdscr.clear()
-    stdscr.addstr(0, 0, qso2str(cc.current_qso, cc.edit_pos, 0))
-    stdscr.addstr(2, 0, f'{"Appending to" if append else "Overwriting"} "{adi_f.name}"')
-    stdscr.addstr(1, 0, PROMPT)
-
-    stdscr.refresh()
-
+    adi_f = None
     try:
-        while True:
-            py, px = stdscr.getyx()
-            stdscr.addstr(0, 0, qso2str(cc.current_qso, cc.edit_pos, len(cc.qsos)))
-            stdscr.clrtoeol()
-            stdscr.addstr(py, px, '')
+        cc = CassiopeiaConsole(own_call, own_loc, own_name)
 
-            c = stdscr.getkey()
+        fmode = 'a' if append else 'w'
+        fexists = os.path.isfile(file)
+        adi_f = open(file, fmode)
 
-            if c == 'KEY_UP':
-                cc.load_prev()
-                stdscr.addstr(2, 0, '')
+        if not append or not fexists:
+            adi_header = {
+                'HEADER': {
+                    'PROGRAMID': 'hamcc',
+                    'PROGRAMVERSION': __version_str__,
+                }}
+
+            adi_f.write(adi.dumps(adi_header, comment='ADIF export by hamcc'))
+            adi_f.flush()
+
+        # Clear screen
+        stdscr.clear()
+        stdscr.addstr(0, 0, qso2str(cc.current_qso, cc.edit_pos, 0))
+        stdscr.addstr(2, 0, f'{"Appending to" if append else "Overwriting"} "{adi_f.name}"')
+        stdscr.addstr(1, 0, PROMPT)
+
+        stdscr.refresh()
+
+        try:
+            while True:
+                py, px = stdscr.getyx()
+                stdscr.addstr(0, 0, qso2str(cc.current_qso, cc.edit_pos, len(cc.qsos)))
                 stdscr.clrtoeol()
-                stdscr.addstr(1, 0, PROMPT)
-                stdscr.clrtoeol()
-            elif c == 'KEY_DOWN':
-                cc.load_next()
-                stdscr.addstr(2, 0, '')
-                stdscr.clrtoeol()
-                stdscr.addstr(1, 0, PROMPT)
-                stdscr.clrtoeol()
-            elif c == 'KEY_DC':
-                res = cc.del_selected()
-                if res >= 0:
-                    stdscr.addstr(2, 0, f'Deleted QSO #{res+1}')
-                else:
+                stdscr.addstr(py, px, '')
+
+                c = stdscr.getkey()
+
+                if c == 'KEY_UP':
+                    cc.load_prev()
                     stdscr.addstr(2, 0, '')
-                stdscr.clrtoeol()
-                stdscr.addstr(1, 0, PROMPT)
-                stdscr.clrtoeol()
-            elif len(c) > 1 or c in '\r\b\t':
-                continue
-            elif c == '\n':  # Flush QSO to stack
-                res = cc.append_char(c)
-                stdscr.addstr(2, 0, res)
-                stdscr.clrtoeol()
-                stdscr.addstr(1, 0, PROMPT)
-                stdscr.clrtoeol()
-            elif c == '!':  # Write QSOs to disk
-                cc.append_char('\n')
-                i = 0
-                msg = ''
-                while cc.has_qsos():
-                    adi_f.write('\n\n' + adi.dumps({'RECORDS': [cc.pop_qso()]}))
-                    adi_f.flush()
-                    i += 1
-                    msg = f'{i} QSO(s) written to disk'
-                stdscr.addstr(2, 0, msg)
-                stdscr.clrtoeol()
-                stdscr.addstr(1, 0, PROMPT)
-                stdscr.clrtoeol()
-            else:  # Concat sequence
-                res = cc.append_char(c)
-                stdscr.addstr(2, 0, res)
-                stdscr.clrtoeol()
-                if c in ('~', '?'):
+                    stdscr.clrtoeol()
                     stdscr.addstr(1, 0, PROMPT)
                     stdscr.clrtoeol()
-                else:
-                    stdscr.addstr(py, px, '')
-                    stdscr.addstr(c)
-
-    except KeyboardInterrupt:
-        while cc.has_qsos():
-            adi_f.write('\n\n' + adi.dumps({'RECORDS': [cc.pop_qso()]}))
-            adi_f.flush()
+                elif c == 'KEY_DOWN':
+                    cc.load_next()
+                    stdscr.addstr(2, 0, '')
+                    stdscr.clrtoeol()
+                    stdscr.addstr(1, 0, PROMPT)
+                    stdscr.clrtoeol()
+                elif c == 'KEY_DC':
+                    res = cc.del_selected()
+                    if res >= 0:
+                        stdscr.addstr(2, 0, f'Deleted QSO #{res+1}')
+                    else:
+                        stdscr.addstr(2, 0, '')
+                    stdscr.clrtoeol()
+                    stdscr.addstr(1, 0, PROMPT)
+                    stdscr.clrtoeol()
+                elif len(c) > 1 or c in '\r\b\t':
+                    continue
+                elif c == '\n':  # Flush QSO to stack
+                    res = cc.append_char(c)
+                    stdscr.addstr(2, 0, res)
+                    stdscr.clrtoeol()
+                    stdscr.addstr(1, 0, PROMPT)
+                    stdscr.clrtoeol()
+                elif c == '!':  # Write QSOs to disk
+                    cc.append_char('\n')
+                    i = 0
+                    msg = ''
+                    while cc.has_qsos():
+                        adi_f.write('\n\n' + adi.dumps({'RECORDS': [cc.pop_qso()]}))
+                        adi_f.flush()
+                        i += 1
+                        msg = f'{i} QSO(s) written to disk'
+                    stdscr.addstr(2, 0, msg)
+                    stdscr.clrtoeol()
+                    stdscr.addstr(1, 0, PROMPT)
+                    stdscr.clrtoeol()
+                else:  # Concat sequence
+                    res = cc.append_char(c)
+                    stdscr.addstr(2, 0, res)
+                    stdscr.clrtoeol()
+                    if c in ('~', '?'):
+                        stdscr.addstr(1, 0, PROMPT)
+                        stdscr.clrtoeol()
+                    else:
+                        stdscr.addstr(py, px, '')
+                        stdscr.addstr(c)
+        except KeyboardInterrupt:
+            while cc.has_qsos():
+                adi_f.write('\n\n' + adi.dumps({'RECORDS': [cc.pop_qso()]}))
+                adi_f.flush()
+    except Exception as exc:  # Print exception info due to curses wrapper removes traceback
+        print(f'{type(exc).__name__}: {exc}', file=sys.stderr)
     finally:
-        adi_f.close()
+        if adi_f:
+            adi_f.close()
 
 
 def main():
