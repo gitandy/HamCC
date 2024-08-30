@@ -142,7 +142,7 @@ For partial dates it will be filled in the same manner for each 2 digits missing
 So the date 240327d, 0327d or 27d will be filled as if 20240327d was given.
 
 ### hostilog shortcuts for bands and modes
-HamCC also supports the [hostilog shortcuts](https://github.com/gitandy/HamCC/blob/master/HOSTILOG_SHORTCUTS.md]) 
+HamCC also supports the [hostilog shortcuts](https://github.com/gitandy/HamCC/blob/master/HOSTILOG_SHORTCUTS.md) 
 for modes and bands (bands limited to hostilog shortwave mode).
 Only the mode shortcut d will result in MFSK for ADIF compatibility.
 
