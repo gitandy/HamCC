@@ -104,10 +104,17 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('Name', self.cc.current_qso['NAME'])
 
     def test_060_locator(self):
+        self.assertEqual('', self.cc.evaluate('@Test(AA11aa)'))
+        self.assertEqual('AA11aa', self.cc.current_qso['GRIDSQUARE'])
+        self.assertEqual('Test', self.cc.current_qso['QTH'])
+
         self.assertEqual('', self.cc.evaluate('@AA11aa'))
         self.assertEqual('AA11aa', self.cc.current_qso['GRIDSQUARE'])
+        self.assertNotIn('QTH', self.cc.current_qso)
 
-        self.assertEqual('Wrong maidenhead format', self.cc.evaluate('@ZZ11aa'))
+        self.assertEqual('Wrong QTH/maidenhead format', self.cc.evaluate('@ZZ11aa'))
+        self.assertEqual('AA11aa', self.cc.current_qso['GRIDSQUARE'])
+        self.assertEqual('Wrong QTH/maidenhead format', self.cc.evaluate('@TestAA22aa)'))
         self.assertEqual('AA11aa', self.cc.current_qso['GRIDSQUARE'])
 
     @unittest.expectedFailure

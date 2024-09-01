@@ -63,15 +63,22 @@ class CassiopeiaConsole:
         r'([a-zA-Z0-9]{1,3}?/)?([a-zA-Z0-9]{1,3}?[0-9][a-zA-Z0-9]{0,3}?[a-zA-Z])(/[aAmMpPrRtT]{1,2}?)?')
     REGEX_RSTFIELD = re.compile(r'([1-5][1-9][1-9aAcCkKmMsSxX]?)|([-+][0-9]{1,2})')
     REGEX_LOCATOR = re.compile(r'[a-rA-R]{2}[0-9]{2}([a-xA-X]{2}([0-9]{2})?)?')
+    REGEX_QTH = re.compile(r'(.*?)? *\(([a-rA-R]{2}[0-9]{2}([a-xA-X]{2}([0-9]{2})?)?)\)')
 
-    def __init__(self, my_call: str, my_loc: str, my_name: str = ''):
+    def __init__(self, my_call: str, my_loc: str, my_name: str = '', contest_id: str = '', qso_number: int = 1):
         if my_call and not self.check_format(self.REGEX_CALL, my_call):
             raise Exception('Wrong call format')
         self.__my_call__ = my_call
 
-        if my_loc and not self.check_format(self.REGEX_LOCATOR, my_loc):
-            raise Exception('Wrong locator format')
-        self.__my_loc__ = my_loc
+        if my_loc and (not self.check_format(self.REGEX_LOCATOR, my_loc) and not self.check_qth(my_loc)):
+            raise Exception('Wrong QTH/maidenhead format')
+        if self.check_format(self.REGEX_LOCATOR, my_loc):
+            self.__my_loc__ = my_loc
+            self.__my_qth__ = ''
+        else:
+            qth, loc = self.check_qth(my_loc)
+            self.__my_loc__ = loc
+            self.__my_qth__ = qth
 
         self.__my_name__ = my_name
 
@@ -88,8 +95,8 @@ class CassiopeiaConsole:
         self.__pwr__ = ''
 
         # Special
-        self.__contest_id__ = ''
-        self.__cntstqso_id__ = 0
+        self.__contest_id__ = contest_id
+        self.__cntstqso_id__ = int(qso_number) if self.__contest_id__ else 0
 
         self.__edit_pos__ = -1
         self.__cur_seq__ = ''
@@ -144,6 +151,15 @@ class CassiopeiaConsole:
         :return: True if pattern matches"""
         return bool(re.fullmatch(exp, txt))
 
+    def check_qth(self, qth_loc: str) -> None | tuple:
+        """Test a QTH + locator against a regular expression
+        :param qth_loc: "QTH (locator)"
+        :return: tuple of parts ('QTH', 'locator')"""
+
+        m = re.fullmatch(self.REGEX_QTH, qth_loc.strip())
+        if m:
+            return m.groups()[:2]
+
     def clear(self):
         """Clear current QSO (input cache)"""
 
@@ -167,10 +183,16 @@ class CassiopeiaConsole:
         # Optional
         if self.__my_name__:
             self.__cur_qso__['MY_NAME'] = self.__my_name__
+        if self.__my_qth__:
+            self.__cur_qso__['MY_CITY'] = self.__my_qth__
         if self.__pwr__:
             self.__cur_qso__['TX_PWR'] = self.__pwr__
         if self.__freq__:
             self.__cur_qso__['FREQ'] = self.__freq__
+
+        if self.__contest_id__:
+            self.__cur_qso__['CONTEST_ID'] = self.__contest_id__
+            self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
 
     def reset(self):
         """Reset whole session"""
@@ -204,16 +226,18 @@ class CassiopeiaConsole:
         if self.__qso_active__:
             qso = deepcopy(self.__cur_qso__)
 
+            res = f'Last QSO cached: {qso["CALL"]}'
+
             if self.__edit_pos__ == -1:
                 self.__qsos__.append(qso)
             else:
                 self.__qsos__[self.__edit_pos__] = self.__cur_qso__
 
             self.clear()
+
             if self.__contest_id__:
-                self.__cur_qso__['CONTEST_ID'] = self.__contest_id__
                 self.__cntstqso_id__ += 1
-                self.__cur_qso__['STX'] = str(self.__cntstqso_id__)
+                self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
 
         return res
 
@@ -329,11 +353,10 @@ class CassiopeiaConsole:
 
     def evaluate_contest(self, seq: str) -> str:
         if len(seq) > 1:
-            if self.__contest_id__:  # Reset QSO ID for new contest
-                self.__cntstqso_id__ = 1
+            self.__cntstqso_id__ = 1
             self.__contest_id__ = seq[1:].upper()
             self.__cur_qso__['CONTEST_ID'] = self.__contest_id__
-            self.__cur_qso__['STX'] = str(self.__cntstqso_id__)
+            self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
         else:
             self.__contest_id__ = ''
             if 'CONTEST_ID' in self.__cur_qso__:
@@ -355,6 +378,15 @@ class CassiopeiaConsole:
         elif seq.startswith('-n'):
             self.__my_name__ = seq[2:].replace('_', ' ')
             self.__cur_qso__['MY_NAME'] = self.__my_name__
+        elif seq.startswith('-N'):  # Start contest qso ID
+            if self.__contest_id__:
+                try:
+                    self.__cntstqso_id__ = int(seq[2:])
+                    self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
+                except ValueError:
+                    return f'Not a valid number {seq[2:]}'
+            else:
+                return 'No active contest'
         elif seq == '-V':
             return f'{__proj_name__}: {__version_str__}'
         else:
@@ -388,15 +420,23 @@ class CassiopeiaConsole:
             elif seq.startswith('\''):  # Name
                 self.__cur_qso__['NAME'] = seq[1:].replace('_', ' ')
             elif seq.startswith('@'):  # Locator
-                if not self.check_format(self.REGEX_LOCATOR, seq[1:]):
-                    return 'Wrong maidenhead format'
-                self.__cur_qso__['GRIDSQUARE'] = seq[1:3].upper() + seq[3:]
+                if (not self.check_format(self.REGEX_LOCATOR, seq[1:]) and not
+                self.check_qth(seq[1:])):
+                    return 'Wrong QTH/maidenhead format'
+                if self.check_format(self.REGEX_LOCATOR, seq[1:]):
+                    self.__cur_qso__['GRIDSQUARE'] = seq[1:3].upper() + seq[3:]
+                    if 'QTH' in self.__cur_qso__:
+                        self.__cur_qso__.pop('QTH')
+                else:
+                    qth, loc = self.check_qth(seq[1:])
+                    self.__cur_qso__['GRIDSQUARE'] = loc
+                    self.__cur_qso__['QTH'] = qth
             elif seq.startswith('$'):  # Contest ID
                 return self.evaluate_contest(seq)
             elif seq.startswith('%'):  # Contest received QSO id
                 if not self.__contest_id__:
                     return 'No active contest'
-                self.__cur_qso__['SRX'] = seq[1:]
+                self.__cur_qso__['SRX'] = seq[1:].upper()
             elif seq[0] in '.,':  # RST
                 if not self.check_format(self.REGEX_RSTFIELD, seq[1:]):
                     return 'Wrong RST format'

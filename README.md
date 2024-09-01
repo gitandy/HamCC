@@ -29,6 +29,7 @@ You may set your call, your name and your locator via arguments.
 
     # hamcc -c DF1ASC -n Andreas -l JO30ui
 
+See `--help` for all other arguments.
 After starting the program you will see different rows.
 
     | */- | d 2024-08-20 | t 18:58 | B 15m | M SSB | C  | @  |
@@ -54,7 +55,7 @@ If you hit ENTER the QSO (sentence) will be saved and the input will be cleared 
 There is a step back as long the QSO is not written to disk.
 
 These commands will only work when run as program
-* Typing ! will write all QSOs (if any, see first box in first row) to disk
+* Typing `!` will write all QSOs (if any, see first box in first row) to disk
 * Key UP/DOWN scrolls through available QSOs
 * DEL key deletes the selected QSO
 * CTRL-C writes all QSOs to disks and quits the program
@@ -73,11 +74,11 @@ The single words must conform to a format to be evaluated as valid QSO informati
 
 Example session
 
-1. Type in 8 or 80m followed by SPACE and HamCC recons you are using the 80m band 
-2. Now type s or ssb and HamCC saves the mode SSB after you hit SPACE
-3. We are ready for the first QSO? Ah, DF1ASC is calling so type it in and hit SPACE (I won't repeat it from now on)
-4. He told you his name Andreas and we prefix it like 'Andreas
-5. You want to leave some comments? Type in "#Ant Dipol, Rig FT-991A"
+1. Type in `8` or `80m` followed by SPACE and HamCC recons you are using the 80m band 
+2. Now type `s` or `ssb` and HamCC saves the mode SSB after you hit SPACE
+3. We are ready for the first QSO? Ah, `DF1ASC` is calling so type it in and hit SPACE (I won't repeat it from now on)
+4. He told you his name Andreas and we prefix it like `'Andreas`
+5. You want to leave some comments? Type in `"#Ant Dipol, Rig FT-991A"`
 
 Your console should look something like
 
@@ -96,35 +97,36 @@ The table shows all available pre- and postfixes. The following will work for AP
 Placeholder x for characters and 9 for numbers.
 Types marked with auto are prefilled but can be overwritten. Types marked with memory are retained for the session.
 
-| Info         | Format          | Type    | Comments                    |
-|--------------|-----------------|---------|-----------------------------|
-| Callsign     | xx9xx           |         | format checked              |
-| Locator      | @xx99xx         |         | format checked              |
-| Name         | 'xxxx           |         | _ for spaces                |
-| Comment      | #xxxx           |         | _ for spaces                |
-| Band         | valid ADIF band | memory  |                             |
-| Mode         | valid ADIF mode | memory  |                             | 
-| RST rcvd     | .599            | auto    | default CW 599, phone 59    |
-| RST sent     | ,599            | auto    | default CW 599, phone 59    |
-| QSL rcvd     | *               |         | toggles the information     |
-| Contest ID   | $xxxxxx         | memory  |                             |
-| Rcvd QSO ID  | %xxxxx          |         |                             |
-| Time         | HHMMt           | memory  | partly time will be filled  |
-| Date         | YYYYMMDDd       | memory  | partly date will be filled  |
-| Date/Time    | =               | auto    | sync date/time to now       |
-| Frequency    | 99999f          |         | in kHz                      |
-| TX Power     | 99p             |         | in W                        | 
-| Your Call    | -cxx9xx         | memory  |                             | 
-| Your Locator | -lxx99xx        | memory  |                             | 
-| Your Name    | -nxxxx          | memory  | _ for spaces                |
-| Finish QSO   | linefeed        | command | ENTER-Key                   |
-| Clear QSO    | ~               | command | clears input not cached QSO |
-| Show QSO     | ?               | command |                             |
-| Show version | -V              | command |                             |
+| Info         | Format                   | Type    | Comments                           |
+|--------------|--------------------------|---------|------------------------------------|
+| Callsign     | xx9xx                    |         | format checked                     |
+| Locator/QTH  | @xx99xx or @QTH(Locator) |         | format checked                     |
+| Name         | 'xxxx                    |         | _ for spaces                       |
+| Comment      | #xxxx                    |         | _ for spaces                       |
+| Band         | valid ADIF band          | memory  |                                    |
+| Mode         | valid ADIF mode          | memory  |                                    | 
+| RST rcvd     | .599                     | auto    | default CW 599, phone 59           |
+| RST sent     | ,599                     | auto    | default CW 599, phone 59           |
+| QSL rcvd     | *                        |         | toggles the information            |
+| Contest ID   | $xxxxxx                  | memory  |                                    |
+| Rcvd QSO ID  | %xxxxx                   |         |                                    |
+| Time         | HHMMt                    | memory  | partly time will be filled         |
+| Date         | YYYYMMDDd                | memory  | partly date will be filled         |
+| Date/Time    | =                        | auto    | sync date/time to now              |
+| Frequency    | 99999f                   |         | in kHz                             |
+| TX Power     | 99p                      |         | in W                               | 
+| Your Call    | -cxx9xx                  | memory  |                                    | 
+| Your Locator | -lxx99xx                 | memory  |                                    | 
+| Your Name    | -nxxxx                   | memory  | _ for spaces                       |
+| Finish QSO   | linefeed                 | command | ENTER-Key                          |
+| Clear QSO    | ~                        | command | clears input not cached QSO        |
+| Show QSO     | ?                        | command |                                    |
+| Set QSO No   | -N9                      |         | set start value for contest QSO No |
+| Show version | -V                       | command |                                    |
 
 For callsigns, mode, locators, RST and contest id lowercase will be converted to uppecase.
 
-Some info allows to use _ which will be converted to spaces. 
+Some info allows to use `_` which will be converted to spaces. 
 
     QSO> #Long_comment 'Long_name
 
@@ -132,23 +134,23 @@ It is also possible to enclose the sequence in quotes to type spaces instead.
 
     QSO> "#Long comment" "'Long name"
 
-RST fields supports the whole range like 59 for phone, 599 for CW or -06 for digimodes. 
-For CW the last digit can also be an a for aurora, s for scatter or alike 
+RST fields supports the whole range like `59` for phone, `599` for CW or `-06` for digimodes. 
+For CW the last digit can also be an `a` for aurora, `s` for scatter or alike 
 (see [R-S-T System](https://en.wikipedia.org/wiki/R-S-T_system) on Wikipedia).
 
-If you only give minutes to time i.e. 23t the time will be filled with the last hour as if 1823t was given 
+If you only give minutes to time i.e. `23t` the time will be filled with the last hour as if `1823t` was given 
 (assuming last time is something like 18:12 or so).
 For partial dates it will be filled in the same manner for each 2 digits missing from left to right. 
-So the date 240327d, 0327d or 27d will be filled as if 20240327d was given.
+So the date `240327d`, `0327d` or `27d` will be filled as if `20240327d` was given.
 
 ### hostilog shortcuts for bands and modes
 HamCC also supports the [hostilog shortcuts](https://github.com/gitandy/HamCC/blob/master/HOSTILOG_SHORTCUTS.md) 
 for modes and bands (bands limited to hostilog shortwave mode).
-Only the mode shortcut d will result in MFSK for ADIF compatibility.
+Only the mode shortcut `d` will result in MFSK for ADIF compatibility.
 
 HamCC adds two shortcuts for modes
-* m for MFSK (which also works via d)
-* dv for DIGITALVOICE
+* `m` for MFSK (which also works via `d`)
+* `dv` for DIGITALVOICE
 
 ### Contests
 If you typed in a contest id HamCC starts to increase a QSO contest reference (see marked in example)
@@ -161,7 +163,7 @@ Changing the contest id resets the QSO counter.
 
 The received contest data will simply be stored without further handling (currently).
 
-To leave the contest mode for the following QSOs type a single $ followed by a SPACE.
+To leave the contest mode for the following QSOs type a single `$` followed by a SPACE.
 
 Source Code
 -----------
