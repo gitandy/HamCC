@@ -49,6 +49,15 @@ class TestCaseAppendChar(unittest.TestCase):
     def test_50_current(self):
         self.fail('Test missing')
 
+    def test_60_backspace(self):
+        seq = 'YY1YYY'
+        self.insert_sequence(seq)
+        for i, _ in enumerate(seq):
+            self.assertEqual('\b', self.cc.append_char('\b'))
+            self.assertEqual(seq[:-1-i], self.cc.__cur_seq__)
+
+        self.assertEqual('', self.cc.append_char('\b'))
+
 
 if __name__ == '__main__':
     unittest.main()

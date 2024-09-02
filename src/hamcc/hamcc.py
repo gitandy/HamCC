@@ -70,12 +70,13 @@ class CassiopeiaConsole:
             raise Exception('Wrong call format')
         self.__my_call__ = my_call
 
+        self.__my_loc__ = ''
+        self.__my_qth__ = ''
         if my_loc and (not self.check_format(self.REGEX_LOCATOR, my_loc) and not self.check_qth(my_loc)):
             raise Exception('Wrong QTH/maidenhead format')
         if self.check_format(self.REGEX_LOCATOR, my_loc):
             self.__my_loc__ = my_loc
-            self.__my_qth__ = ''
-        else:
+        elif self.check_qth(my_loc):
             qth, loc = self.check_qth(my_loc)
             self.__my_loc__ = loc
             self.__my_qth__ = qth
@@ -107,13 +108,19 @@ class CassiopeiaConsole:
         self.clear()
 
     def append_char(self, char: str) -> str:
-        """Append a char to the sequence stack
+        """Append a single char to the sequence stack
+        If a backspace \\b is appended, and it is possible to delete from the end of the sequence a \\b will be returned
+        :param char: the character to add
         :return: the result of evaluation or other actions"""
 
         if len(char) != 1:
             raise Exception('More or less than one character')
 
-        if self.__long_mode__:
+        if char == '\b':  # TODO: Is there a better way?
+            if len(self.__cur_seq__) > 0:
+                self.__cur_seq__ = self.__cur_seq__[:-1]
+                return '\b'
+        elif self.__long_mode__:
             if char in ('"', '\n'):
                 if char == '\n':
                     res = self.finalize_qso()

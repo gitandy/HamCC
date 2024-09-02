@@ -30,7 +30,7 @@ def qso2str(qso, pos, cnt):
         if f in qso:
             val = qso[f]
             if f == 'FREQ':
-                val = str(float(val)*1000)
+                val = str(float(val) * 1000)
             opt_info += f' {i} {val} |'
 
     cntst_info = ''
@@ -39,7 +39,7 @@ def qso2str(qso, pos, cnt):
 
     loc = f'{qso["QTH"]} ({qso["GRIDSQUARE"]})' if 'QTH' in qso else qso["GRIDSQUARE"]
 
-    return (f'| {"*" if pos == -1 else pos+1}/{"-" if cnt == 0 else cnt} | d {d} | t {t} | B {qso["BAND"]} | '
+    return (f'| {"*" if pos == -1 else pos + 1}/{"-" if cnt == 0 else cnt} | d {d} | t {t} | B {qso["BAND"]} | '
             f'M {qso["MODE"]} | C {qso["CALL"]} | @ {loc} |{cntst_info}{opt_info}')
 
 
@@ -65,7 +65,7 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
         # Clear screen
         stdscr.clear()
         stdscr.addstr(0, 0, qso2str(cc.current_qso, cc.edit_pos, 0))
-        fname = '...'+adi_f.name[-60:] if len(adi_f.name) > 60 else adi_f.name
+        fname = '...' + adi_f.name[-60:] if len(adi_f.name) > 60 else adi_f.name
         stdscr.addstr(2, 0, f'{"Appending to" if append else "Overwriting"} "{fname}"')
         stdscr.addstr(1, 0, PROMPT)
 
@@ -95,13 +95,13 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
                 elif c == 'KEY_DC':
                     res = cc.del_selected()
                     if res >= 0:
-                        stdscr.addstr(2, 0, f'Deleted QSO #{res+1}')
+                        stdscr.addstr(2, 0, f'Deleted QSO #{res + 1}')
                     else:
                         stdscr.addstr(2, 0, '')
                     stdscr.clrtoeol()
                     stdscr.addstr(1, 0, PROMPT)
                     stdscr.clrtoeol()
-                elif len(c) > 1 or c in '\r\b\t':
+                elif len(c) > 1 or c in '\r\t':
                     continue
                 elif c == '\n':  # Flush QSO to stack
                     res = cc.append_char(c)
@@ -131,7 +131,12 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
                         stdscr.clrtoeol()
                     else:
                         stdscr.addstr(py, px, '')
-                        stdscr.addstr(c)
+                        if c == '\b':  # TODO: Is there a better way?
+                            if res == '\b':
+                                stdscr.addstr(c)
+                                stdscr.clrtoeol()
+                        else:
+                        	stdscr.addstr(c)
         except KeyboardInterrupt:
             while cc.has_qsos():
                 adi_f.write('\n\n' + adi.dumps({'RECORDS': [cc.pop_qso()]}))
