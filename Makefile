@@ -32,15 +32,28 @@ release:
 	python -m pip install --upgrade twine;
 	python -m twine upload dist/*;
 
-test:
+test: all
 	flake8 ./src --count --select=E9,F63,F7,F82 --show-source --statistics
 	flake8 ./src --count --max-complexity=20 --max-line-length=120 --statistics
 	PYTHONPATH=./src python -m unittest discover -s ./test
 
-.PHONY: src/hamcc/__version__.py test
+build_devenv:
+	python -m venv ./venv
+ifeq ($(OS),Windows_NT)
+	./venv/Scripts/activate.bat
+	pip install -r requirements.txt
+else
+	@bash -c "source ./venv/bin/activate && pip install -r requirements.txt"
+endif
+
+.PHONY: src/hamcc/__version__.py test clean_devenv build_devenv
 
 clean:
 	rm -rf build
 	rm -rf dist
 	rm -f src/hamcc/__version__.py
 	rm -f
+
+clean_devenv:
+	rm -r venv
+
