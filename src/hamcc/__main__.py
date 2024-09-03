@@ -8,14 +8,14 @@ from adif_file import adi
 from adif_file import __version_str__ as __version_adif_file__
 
 from . import __proj_name__, __version_str__, __author_name__, __copyright__
-from .hamcc import CassiopeiaConsole
+from .hamcc import CassiopeiaConsole, adif_date2iso, adif_time2iso
 
 PROMPT = 'QSO> '
 
 
 def qso2str(qso, pos, cnt):
-    d = qso["QSO_DATE"][:4] + '-' + qso["QSO_DATE"][4:6] + '-' + qso["QSO_DATE"][6:8]
-    t = qso["TIME_ON"][:2] + ':' + qso["TIME_ON"][2:4]
+    d = adif_date2iso(qso["QSO_DATE"])
+    t = adif_time2iso(qso["TIME_ON"])
 
     opt_info = ''
     for i, f in (
@@ -43,30 +43,51 @@ def qso2str(qso, pos, cnt):
             f'M {qso["MODE"]} | C {qso["CALL"]} | @ {loc} |{cntst_info}{opt_info}')
 
 
+def read_adi(file: str) -> tuple[dict[str, str], dict[str, tuple[str, str]]]:
+    last_qso = {}
+    worked_calls = {}
+
+    doc = adi.load(file)
+    for r in doc['RECORDS']:
+        if 'CALL' in r and 'QSO_DATE' in r and 'TIME_ON' in r:
+            last_qso = r
+            worked_calls[r['CALL']] = (r['QSO_DATE'], r['TIME_ON'])
+    return last_qso, worked_calls
+
+
 def command_console(stdscr: window, file, own_call, own_loc, own_name, append=False, contest_id='', qso_number=1):
     adi_f = None
     try:
-        cc = CassiopeiaConsole(own_call, own_loc, own_name, contest_id, qso_number)
-
         fmode = 'a' if append else 'w'
         fexists = os.path.isfile(file)
+
+        last_qso = {}
+        worked_calls = []
+        if fexists and append:
+            last_qso, worked_calls = read_adi(file)
+
         adi_f = open(file, fmode)
 
         if not append or not fexists:
             adi_header = {
                 'HEADER': {
-                    'PROGRAMID': 'hamcc',
+                    'PROGRAMID': 'HamCC',
                     'PROGRAMVERSION': __version_str__,
                 }}
 
             adi_f.write(adi.dumps(adi_header, comment='ADIF export by hamcc'))
             adi_f.flush()
 
+        cc = CassiopeiaConsole(own_call, own_loc, own_name, contest_id, qso_number, last_qso, worked_calls)
+
         # Clear screen
         stdscr.clear()
         stdscr.addstr(0, 0, qso2str(cc.current_qso, cc.edit_pos, 0))
-        fname = '...' + adi_f.name[-60:] if len(adi_f.name) > 60 else adi_f.name
-        stdscr.addstr(2, 0, f'{"Appending to" if append else "Overwriting"} "{fname}"')
+        fname = '...' + adi_f.name[-40:] if len(adi_f.name) > 40 else adi_f.name
+        last_qso_str = (f'. Last QSO: {last_qso["CALL"]} '
+                        f'worked on {adif_date2iso(last_qso["QSO_DATE"])} '
+                        f'at {adif_time2iso(last_qso["TIME_ON"])}') if last_qso and 'CALL' in last_qso else ''
+        stdscr.addstr(2, 0, f'{"Appending to" if append else "Overwriting"} "{fname}"{last_qso_str}')
         stdscr.addstr(1, 0, PROMPT)
 
         stdscr.refresh()
@@ -136,7 +157,7 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
                                 stdscr.addstr(c)
                                 stdscr.clrtoeol()
                         else:
-                        	stdscr.addstr(c)
+                            stdscr.addstr(c)
         except KeyboardInterrupt:
             while cc.has_qsos():
                 adi_f.write('\n\n' + adi.dumps({'RECORDS': [cc.pop_qso()]}))

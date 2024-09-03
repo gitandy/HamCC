@@ -21,6 +21,18 @@ BANDS = __read_json__('data/bands.json')
 MODES = __read_json__('data/modes.json')
 
 
+def adif_date2iso(date: str) -> str | None:
+    if len(date) != 8:
+        return
+    return date[:4] + '-' + date[4:6] + '-' + date[6:8]
+
+
+def adif_time2iso(time: str) -> str | None:
+    if len(time) != 4:
+        return
+    return time[:2] + ':' + time[2:4]
+
+
 class CassiopeiaConsole:
     # These are some hostilog compatible definitions
     # Credits to Peter, DF1LX the author of hostilog which inspired me to write hamcc
@@ -65,13 +77,17 @@ class CassiopeiaConsole:
     REGEX_LOCATOR = re.compile(r'[a-rA-R]{2}[0-9]{2}([a-xA-X]{2}([0-9]{2})?)?')
     REGEX_QTH = re.compile(r'(.*?)? *\(([a-rA-R]{2}[0-9]{2}([a-xA-X]{2}([0-9]{2})?)?)\)')
 
-    def __init__(self, my_call: str, my_loc: str, my_name: str = '', contest_id: str = '', qso_number: int = 1):
+    def __init__(self, my_call: str = '', my_loc: str = '', my_name: str = '',
+                 contest_id: str = '', qso_number: int = 1,
+                 init_qso: dict[str, str] = None, init_worked: dict[str, tuple[str, str]] = None):
         if my_call and not self.check_format(self.REGEX_CALL, my_call):
             raise Exception('Wrong call format')
-        self.__my_call__ = my_call
+        self.__my_call__ = init_qso['STATION_CALLSIGN'] if init_qso and 'STATION_CALLSIGN' in init_qso else ''
+        if my_call:
+            self.__my_call__ = my_call
 
-        self.__my_loc__ = ''
-        self.__my_qth__ = ''
+        self.__my_loc__ = init_qso['MY_GRIDSQUARE'] if init_qso and 'MY_GRIDSQUARE' in init_qso else ''
+        self.__my_qth__ = init_qso['MY_CITY'] if init_qso and 'MY_CITY' in init_qso else ''
         if my_loc and (not self.check_format(self.REGEX_LOCATOR, my_loc) and not self.check_qth(my_loc)):
             raise Exception('Wrong QTH/maidenhead format')
         if self.check_format(self.REGEX_LOCATOR, my_loc):
@@ -81,23 +97,28 @@ class CassiopeiaConsole:
             self.__my_loc__ = loc
             self.__my_qth__ = qth
 
-        self.__my_name__ = my_name
+        self.__my_name__ = init_qso['QSO_DATE'] if init_qso and 'QSO_DATE' in init_qso else ''
+        if my_name:
+            self.__my_name__ = my_name
 
         self.__qsos__: list[dict] = []
 
         # Mandatory
-        self.__date__ = datetime.datetime.utcnow().strftime('%Y%m%d')
-        self.__time__ = datetime.datetime.utcnow().strftime('%H%M')
-        self.__band__ = ''
-        self.__mode__ = ''
+        self.__date__ = init_qso['QSO_DATE'] if init_qso and 'QSO_DATE' in init_qso else (
+            datetime.datetime.utcnow().strftime('%Y%m%d'))
+        self.__time__ = init_qso['TIME_ON'] if init_qso and 'TIME_ON' in init_qso else (
+            datetime.datetime.utcnow().strftime('%H%M'))
+        self.__band__ = init_qso['BAND'] if init_qso and 'BAND' in init_qso else ''
+        self.__mode__ = init_qso['MODE'] if init_qso and 'MODE' in init_qso else ''
 
         # Optional
-        self.__freq__ = ''
-        self.__pwr__ = ''
+        self.__freq__ = init_qso['FREQ'] if init_qso and 'FREQ' in init_qso else ''
+        self.__pwr__ = init_qso['TX_PWR'] if init_qso and 'TX_PWR' in init_qso else ''
 
         # Special
         self.__contest_id__ = contest_id
         self.__cntstqso_id__ = int(qso_number) if self.__contest_id__ else 0
+        self.__worked_calls__: dict[str, tuple[str, str]] = init_worked if type(init_worked) is dict else {}
 
         self.__edit_pos__ = -1
         self.__cur_seq__ = ''
@@ -199,7 +220,8 @@ class CassiopeiaConsole:
 
         if self.__contest_id__:
             self.__cur_qso__['CONTEST_ID'] = self.__contest_id__
-            self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
+            self.__cur_qso__['STX'] = str(self.__cntstqso_id__)
+            self.__cur_qso__['STX_STRING'] = f'{self.__cntstqso_id__:03d}'
 
     def reset(self):
         """Reset whole session"""
@@ -219,6 +241,7 @@ class CassiopeiaConsole:
         # Special
         self.__contest_id__ = ''
         self.__cntstqso_id__ = 0
+        self.__worked_calls__ = []
 
         self.clear()
 
@@ -237,6 +260,8 @@ class CassiopeiaConsole:
 
             if self.__edit_pos__ == -1:
                 self.__qsos__.append(qso)
+                if qso["CALL"] not in self.__worked_calls__:
+                    self.__worked_calls__[qso["CALL"]] = (qso['QSO_DATE'], qso['TIME_ON'])
             else:
                 self.__qsos__[self.__edit_pos__] = self.__cur_qso__
 
@@ -337,7 +362,7 @@ class CassiopeiaConsole:
             elif len(d) == 2:  # fill to last year and month
                 d = self.__date__[:6] + d
             if not self.check_format(self.REGEX_DATE, d):
-                return 'Wrong date format'
+                return 'Error: Wrong date format'
             self.__date__ = d
             self.__cur_qso__['QSO_DATE'] = d
         elif seq.endswith('t'):
@@ -345,7 +370,7 @@ class CassiopeiaConsole:
             if len(t) == 2:  # if only minutes are given fill hour with old time
                 t = self.__time__[:2] + t
             if not self.check_format(self.REGEX_TIME, t):
-                return 'Wrong time format'
+                return 'Error: Wrong time format'
             self.__time__ = t
             self.__cur_qso__['TIME_ON'] = self.__time__
         elif seq.endswith('f'):
@@ -355,7 +380,7 @@ class CassiopeiaConsole:
             self.__pwr__ = seq[:-1]
             self.__cur_qso__['TX_POWER'] = self.__pwr__
         else:
-            return 'Unknown number format'
+            return 'Error: Unknown number format'
         return ''
 
     def evaluate_contest(self, seq: str) -> str:
@@ -374,12 +399,12 @@ class CassiopeiaConsole:
     def evaluate_extended(self, seq: str) -> str:
         if seq.startswith('-c'):
             if not self.check_format(self.REGEX_CALL, seq[2:]):
-                return 'Wrong call format'
+                return 'Error: Wrong call format'
             self.__my_call__ = seq[2:]
             self.__cur_qso__['STATION_CALLSIGN'] = self.__my_call__
         elif seq.startswith('-l'):
             if not self.check_format(self.REGEX_LOCATOR, seq[2:]):
-                return 'Wrong maidenhead format'
+                return 'Error: Wrong maidenhead format'
             self.__my_loc__ = seq[2:]
             self.__cur_qso__['MY_GRIDSQUARE'] = self.__my_loc__
         elif seq.startswith('-n'):
@@ -391,13 +416,13 @@ class CassiopeiaConsole:
                     self.__cntstqso_id__ = int(seq[2:])
                     self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
                 except ValueError:
-                    return f'Not a valid number {seq[2:]}'
+                    return f'Error: Not a valid number {seq[2:]}'
             else:
-                return 'No active contest'
+                return 'Error: No active contest'
         elif seq == '-V':
             return f'{__proj_name__}: {__version_str__}'
         else:
-            return 'Unknown prefix'
+            return 'Error: Unknown prefix'
         return ''
 
     # flake8: noqa: C901
@@ -429,7 +454,7 @@ class CassiopeiaConsole:
             elif seq.startswith('@'):  # Locator
                 if (not self.check_format(self.REGEX_LOCATOR, seq[1:]) and not
                 self.check_qth(seq[1:])):
-                    return 'Wrong QTH/maidenhead format'
+                    return 'Error: Wrong QTH/maidenhead format'
                 if self.check_format(self.REGEX_LOCATOR, seq[1:]):
                     self.__cur_qso__['GRIDSQUARE'] = seq[1:3].upper() + seq[3:]
                     if 'QTH' in self.__cur_qso__:
@@ -442,11 +467,15 @@ class CassiopeiaConsole:
                 return self.evaluate_contest(seq)
             elif seq.startswith('%'):  # Contest received QSO id
                 if not self.__contest_id__:
-                    return 'No active contest'
-                self.__cur_qso__['SRX'] = seq[1:].upper()
+                    return 'Error: No active contest'
+                try:
+                    self.__cur_qso__['SRX'] = str(int(seq[1:]))
+                except ValueError:
+                    pass
+                self.__cur_qso__['SRX_STRING'] = seq[1:].upper()
             elif seq[0] in '.,':  # RST
                 if not self.check_format(self.REGEX_RSTFIELD, seq[1:]):
-                    return 'Wrong RST format'
+                    return 'Error: Wrong RST format'
                 if seq[0] == '.':
                     self.__cur_qso__['RST_RCVD'] = seq[1:].upper()
                 else:
@@ -465,7 +494,10 @@ class CassiopeiaConsole:
                 return self.evaluate_extended(seq)
             else:  # Call
                 if not self.check_format(self.REGEX_CALL, seq):
-                    return 'Wrong call format'
+                    return 'Error: Wrong call format'
                 self.__cur_qso__['CALL'] = seq.upper()
+                if seq.upper() in self.__worked_calls__:
+                    return (f'{seq.upper()} worked on {adif_date2iso(self.__worked_calls__[seq.upper()][0])} '
+                            f'at {adif_time2iso(self.__worked_calls__[seq.upper()][1])}')
 
         return ''

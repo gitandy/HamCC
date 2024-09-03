@@ -12,8 +12,6 @@ class TestCaseInstantiate(unittest.TestCase):
         self.assertEqual('Tester', cc.current_qso['MY_NAME'])
 
     def test_20_exception(self):
-        self.assertRaises(Exception, hamcc.CassiopeiaConsole)
-        self.assertRaises(Exception, hamcc.CassiopeiaConsole, 'XX1XXX')
         self.assertRaises(Exception, hamcc.CassiopeiaConsole, 'XX1XXX222', 'AA11aa')
         self.assertRaises(Exception, hamcc.CassiopeiaConsole, 'XX1XXX', 'AA11zz')
 

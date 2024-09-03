@@ -13,6 +13,14 @@ The special mini language used is somewhat inspired by [hostilog](https://df1lx.
 CassiopeiaConsole is designed to be used as an API in other programs to support a textbased interface 
 but can also be used as standalone console logger.
 
+### Functions
+- call with format check
+- locator/QTH with format check
+- contest mode
+- worked before detection
+- storing QSO in ADIF ADI format
+- automatic date and time
+
 The name
 --------
 Searching for a name was not very easy. But on my daily walk with our cat I tend to watch the stars while she 
@@ -68,6 +76,11 @@ This behaviour and the file path can be changed via arguments (run HamCC -h for 
 Some graphical loggers (i.e. [DragonLog](https://github.com/gitandy/DragonLog?tab=readme-ov-file#dragonlog)) are 
 able to watch for ADI file changes from other programs and immediately import new QSOs.
 
+### Initial state
+
+If you start HamCC with an already existing ADIF file it will set the state of the last QSO (date, time, band, mode)
+and collect all available calls for the worked before check.
+
 CassiopeiaConsole minilanguage
 ------------------------------
 The single words must conform to a format to be evaluated as valid QSO information.
@@ -121,7 +134,7 @@ Types marked with auto are prefilled but can be overwritten. Types marked with m
 | Finish QSO   | linefeed                 | command | ENTER-Key                          |
 | Clear QSO    | ~                        | command | clears input not cached QSO        |
 | Show QSO     | ?                        | command |                                    |
-| Set QSO No   | -N9                      |         | set start value for contest QSO No |
+| Set QSO No   | -N9                      | auto    | set start value for contest QSO No |
 | Show version | -V                       | command |                                    |
 
 For callsigns, mode, locators, RST and contest id lowercase will be converted to uppecase.

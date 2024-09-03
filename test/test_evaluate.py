@@ -22,7 +22,7 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('4m', self.cc.current_qso['BAND'])
 
     def test_020_numeric(self):
-        self.assertEqual('Unknown number format', self.cc.evaluate('1o'))
+        self.assertEqual('Error: Unknown number format', self.cc.evaluate('1o'))
 
         self.assertEqual('', self.cc.evaluate('12p'))
         self.assertEqual('12', self.cc.current_qso['TX_POWER'])
@@ -33,10 +33,10 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('145.3125', self.cc.current_qso['FREQ'])
 
     def test_022_numeric_time(self):
-        self.assertEqual('Wrong time format', self.cc.evaluate('1t'))
-        self.assertEqual('Wrong time format', self.cc.evaluate('123t'))
-        self.assertEqual('Wrong time format', self.cc.evaluate('2400t'))
-        self.assertEqual('Wrong time format', self.cc.evaluate('0060t'))
+        self.assertEqual('Error: Wrong time format', self.cc.evaluate('1t'))
+        self.assertEqual('Error: Wrong time format', self.cc.evaluate('123t'))
+        self.assertEqual('Error: Wrong time format', self.cc.evaluate('2400t'))
+        self.assertEqual('Error: Wrong time format', self.cc.evaluate('0060t'))
         self.assertEqual('', self.cc.evaluate('0000t'))
         self.assertEqual('0000', self.cc.current_qso['TIME_ON'])
         self.assertEqual('', self.cc.evaluate('2359t'))
@@ -49,15 +49,15 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('1245', self.cc.current_qso['TIME_ON'])
 
     def test_024_numeric_date(self):
-        self.assertEqual('Wrong date format', self.cc.evaluate('1d'))
-        self.assertEqual('Wrong date format', self.cc.evaluate('123d'))
-        self.assertEqual('Wrong date format', self.cc.evaluate('12345d'))
-        self.assertEqual('Wrong date format', self.cc.evaluate('1234567d'))
-        self.assertEqual('Wrong date format', self.cc.evaluate('00000101d'))
-        self.assertEqual('Wrong date format', self.cc.evaluate('20000001d'))
-        self.assertEqual('Wrong date format', self.cc.evaluate('20001301d'))
-        self.assertEqual('Wrong date format', self.cc.evaluate('20000100d'))
-        self.assertEqual('Wrong date format', self.cc.evaluate('20000132d'))
+        self.assertEqual('Error: Wrong date format', self.cc.evaluate('1d'))
+        self.assertEqual('Error: Wrong date format', self.cc.evaluate('123d'))
+        self.assertEqual('Error: Wrong date format', self.cc.evaluate('12345d'))
+        self.assertEqual('Error: Wrong date format', self.cc.evaluate('1234567d'))
+        self.assertEqual('Error: Wrong date format', self.cc.evaluate('00000101d'))
+        self.assertEqual('Error: Wrong date format', self.cc.evaluate('20000001d'))
+        self.assertEqual('Error: Wrong date format', self.cc.evaluate('20001301d'))
+        self.assertEqual('Error: Wrong date format', self.cc.evaluate('20000100d'))
+        self.assertEqual('Error: Wrong date format', self.cc.evaluate('20000132d'))
 
         self.assertEqual('', self.cc.evaluate('10000101d'))
         self.assertEqual('10000101', self.cc.current_qso['QSO_DATE'])
@@ -112,9 +112,9 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('AA11aa', self.cc.current_qso['GRIDSQUARE'])
         self.assertNotIn('QTH', self.cc.current_qso)
 
-        self.assertEqual('Wrong QTH/maidenhead format', self.cc.evaluate('@ZZ11aa'))
+        self.assertEqual('Error: Wrong QTH/maidenhead format', self.cc.evaluate('@ZZ11aa'))
         self.assertEqual('AA11aa', self.cc.current_qso['GRIDSQUARE'])
-        self.assertEqual('Wrong QTH/maidenhead format', self.cc.evaluate('@TestAA22aa)'))
+        self.assertEqual('Error: Wrong QTH/maidenhead format', self.cc.evaluate('@TestAA22aa)'))
         self.assertEqual('AA11aa', self.cc.current_qso['GRIDSQUARE'])
 
     @unittest.expectedFailure
@@ -127,9 +127,9 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('44', self.cc.current_qso['RST_RCVD'])
         self.assertEqual('55', self.cc.current_qso['RST_SENT'])
 
-        self.assertEqual('Wrong RST format', self.cc.evaluate('.94'))
+        self.assertEqual('Error: Wrong RST format', self.cc.evaluate('.94'))
         self.assertEqual('44', self.cc.current_qso['RST_RCVD'])
-        self.assertEqual('Wrong RST format', self.cc.evaluate(',75'))
+        self.assertEqual('Error: Wrong RST format', self.cc.evaluate(',75'))
         self.assertEqual('55', self.cc.current_qso['RST_SENT'])
 
     def test_100_qsl(self):
@@ -166,8 +166,11 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('', self.cc.evaluate('AA1AAA'))
         self.assertEqual('AA1AAA', self.cc.current_qso['CALL'])
 
-        self.assertEqual('Wrong call format', self.cc.evaluate('AA1AAA1'))
+        self.assertEqual('Error: Wrong call format', self.cc.evaluate('AA1AAA1'))
         self.assertEqual('AA1AAA', self.cc.current_qso['CALL'])
+
+        self.assertEqual('Last QSO cached: AA1AAA', self.cc.finalize_qso())
+        self.assertIn('AA1AAA worked on', self.cc.evaluate('AA1AAA'))
 
 
 if __name__ == '__main__':
