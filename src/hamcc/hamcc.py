@@ -22,13 +22,13 @@ MODES = __read_json__('data/modes.json')
 
 
 def adif_date2iso(date: str) -> str | None:
-    if len(date) != 8:
+    if not date or len(date) != 8:
         return
     return date[:4] + '-' + date[4:6] + '-' + date[6:8]
 
 
 def adif_time2iso(time: str) -> str | None:
-    if len(time) != 4:
+    if not time or len(time) != 4:
         return
     return time[:2] + ':' + time[2:4]
 
@@ -260,7 +260,7 @@ class CassiopeiaConsole:
 
             if self.__edit_pos__ == -1:
                 self.__qsos__.append(qso)
-                if qso["CALL"] not in self.__worked_calls__:
+                if qso["CALL"]:
                     self.__worked_calls__[qso["CALL"]] = (qso['QSO_DATE'], qso['TIME_ON'])
             else:
                 self.__qsos__[self.__edit_pos__] = self.__cur_qso__
