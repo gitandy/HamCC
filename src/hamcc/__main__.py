@@ -2,7 +2,13 @@
 
 import os
 import sys
-from curses import wrapper, window
+import time
+from curses import wrapper, window, error
+import logging
+
+logger = logging.getLogger('HamCC')
+logging.basicConfig(filename='./hamcc.log', filemode='w', format='%(asctime)s %(levelname)-8s %(name)s: %(message)s',
+                    level=logging.INFO)
 
 from adif_file import adi
 from adif_file import __version_str__ as __version_adif_file__
@@ -64,11 +70,13 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
         last_qso = {}
         worked_calls = []
         if fexists and append:
+            logger.info('Loading last QSO and worked before...')
             last_qso, worked_calls = read_adi(file)
 
         adi_f = open(file, fmode)
 
         if not append or not fexists:
+            logger.info('Initialising ADIF file...')
             adi_header = {
                 'HEADER': {
                     'PROGRAMID': 'HamCC',
@@ -77,6 +85,7 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
 
             adi_f.write(adi.dumps(adi_header, comment='ADIF export by hamcc'))
             adi_f.flush()
+            logger.info('...done')
 
         cc = CassiopeiaConsole(own_call, own_loc, own_name, contest_id, qso_number, last_qso, worked_calls)
 
@@ -91,15 +100,22 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
         stdscr.addstr(1, 0, PROMPT)
 
         stdscr.refresh()
-
+        stdscr.nodelay(True)
+        
         try:
+            logger.info('Entering main loop...')
             while True:
                 py, px = stdscr.getyx()
                 stdscr.addstr(0, 0, qso2str(cc.current_qso, cc.edit_pos, len(cc.qsos)))
                 stdscr.clrtoeol()
                 stdscr.addstr(py, px, '')
 
-                c = stdscr.getkey()
+                while True:
+                    try:
+                        c = stdscr.getkey()
+                        break
+                    except error:
+                        time.sleep(.01)
 
                 if c == 'KEY_UP':
                     cc.load_prev()
@@ -159,18 +175,26 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
                         else:
                             stdscr.addstr(c)
         except KeyboardInterrupt:
+            logger.info('Received keyboard interrupt')
+        finally:
+            logger.info(f'Saving {len(cc.qsos)} QSOs...')
             while cc.has_qsos():
                 adi_f.write('\n\n' + adi.dumps({'RECORDS': [cc.pop_qso()]}))
                 adi_f.flush()
+            logger.info('...done')
     except Exception as exc:  # Print exception info due to curses wrapper removes traceback
         print(f'{type(exc).__name__}: {exc}', file=sys.stderr)
+        logger.exception(exc)
     finally:
         if adi_f:
             adi_f.close()
+            logger.info('Closed ADIF file')
 
 
 def main():
     import argparse
+
+    logger.info('Starting...')
 
     parser = argparse.ArgumentParser(description='Log Ham Radio QSOs via console',
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -194,14 +218,22 @@ def main():
                         help='the first QSO number to use if a contest is activated')
     parser.add_argument('-x', '--overwrite', dest='overwrite', action='store_true',
                         help='overwriting the file instead of appending the QSOs')
+    parser.add_argument('--log-level', dest='log_level', choices=['DEBUG', 'INFO', 'WARNING'],
+                        default='INFO',
+                        help='set level for messages')
 
     args = parser.parse_args()
+
+    if args.log_level:
+        logger.setLevel(args.log_level)
+        logging.getLogger('hamcc').setLevel(args.log_level)
 
     if os.name == 'nt':
         os.system("mode con cols=120 lines=25")
 
     wrapper(command_console, args.file, args.own_call, args.own_loc, args.own_name,
             not args.overwrite, args.contest_id, args.qso_number)
+    logger.info('Stopped')
 
 
 if __name__ == '__main__':

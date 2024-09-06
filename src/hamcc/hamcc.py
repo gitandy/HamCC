@@ -5,12 +5,16 @@ import re
 import json
 from copy import deepcopy
 import datetime
+import logging
 
 from . import __proj_name__, __version_str__
+
+logger = logging.getLogger(__name__)
 
 
 def __read_json__(file) -> list:
     try:
+        logger.debug(f'Reading JSON data "{file}"...')
         with open(os.path.join(os.path.dirname(__file__), file)) as jf:
             return json.load(jf)
     except OSError:
@@ -80,6 +84,7 @@ class CassiopeiaConsole:
     def __init__(self, my_call: str = '', my_loc: str = '', my_name: str = '',
                  contest_id: str = '', qso_number: int = 1,
                  init_qso: dict[str, str] = None, init_worked: dict[str, tuple[str, str]] = None):
+        logger.debug('Initialising...')
         if my_call and not self.check_format(self.REGEX_CALL, my_call):
             raise Exception('Wrong call format')
         self.__my_call__ = init_qso['STATION_CALLSIGN'] if init_qso and 'STATION_CALLSIGN' in init_qso else ''
@@ -97,23 +102,23 @@ class CassiopeiaConsole:
             self.__my_loc__ = loc
             self.__my_qth__ = qth
 
-        self.__my_name__ = init_qso['QSO_DATE'] if init_qso and 'QSO_DATE' in init_qso else ''
+        init_qso = {} if not init_qso else init_qso
+
+        self.__my_name__ = init_qso.get('MY_NAME', '')
         if my_name:
             self.__my_name__ = my_name
 
         self.__qsos__: list[dict] = []
 
         # Mandatory
-        self.__date__ = init_qso['QSO_DATE'] if init_qso and 'QSO_DATE' in init_qso else (
-            datetime.datetime.utcnow().strftime('%Y%m%d'))
-        self.__time__ = init_qso['TIME_ON'] if init_qso and 'TIME_ON' in init_qso else (
-            datetime.datetime.utcnow().strftime('%H%M'))
-        self.__band__ = init_qso['BAND'] if init_qso and 'BAND' in init_qso else ''
-        self.__mode__ = init_qso['MODE'] if init_qso and 'MODE' in init_qso else ''
+        self.__date__ = init_qso.get('QSO_DATE', datetime.datetime.utcnow().strftime('%Y%m%d'))
+        self.__time__ = init_qso.get('TIME_ON', datetime.datetime.utcnow().strftime('%H%M'))
+        self.__band__ = init_qso.get('BAND', '')
+        self.__mode__ = init_qso.get('MODE', '')
 
         # Optional
-        self.__freq__ = init_qso['FREQ'] if init_qso and 'FREQ' in init_qso else ''
-        self.__pwr__ = init_qso['TX_PWR'] if init_qso and 'TX_PWR' in init_qso else ''
+        self.__freq__ = init_qso.get('FREQ', '')
+        self.__pwr__ = init_qso.get('TX_PWR', '')
 
         # Special
         self.__contest_id__ = contest_id
