@@ -1,3 +1,7 @@
+PYTHON = python
+PIP = pip
+VENV_DIR = venv
+
 VER = $(shell git describe --tags)
 VERSION = $(firstword $(subst -, ,$(VER)))
 ifeq ($(shell git diff --name-only),)
@@ -7,6 +11,22 @@ UNCLEAN = "True"
 endif
 
 BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+
+ifeq ($(OS),Windows_NT)
+ifeq ($(shell if test -d $(VENV_DIR); then echo "exist";fi),exist)
+VENV_BIN = $(VENV_DIR)/Scripts
+PYTHON = $(VENV_BIN)/python.exe
+PIP = $(VENV_BIN)/pip.exe
+FLAKE8 = $(VENV_BIN)/flake8.exe
+endif
+else
+ifeq ($(shell if test -d $(VENV_DIR); then echo "exist";fi),exist)
+VENV_BIN = $(VENV_DIR)/bin
+PYTHON = $(VENV_BIN)/python
+PIP = $(VENV_BIN)/pip
+FLAKE8 = $(VENV_BIN)/flake8
+endif
+endif
 
 NO_OBSOLETE=
 
@@ -24,27 +44,27 @@ bdist_win: clean all test
 
 dist: NO_OBSOLETE=-no-obsolete
 dist: clean all test
-	python -m pip install --upgrade pip;
-	python -m pip install --upgrade build;
-	python -m build;
+	$(PYTHON) -m pip install --upgrade pip;
+	$(PYTHON) -m pip install --upgrade build;
+	$(PYTHON) -m build;
 
 release:
-	python -m pip install --upgrade twine;
-	python -m twine upload dist/*;
+	$(PYTHON) -m pip install --upgrade twine;
+	$(PYTHON) -m twine upload dist/*;
 
 test: all
-	flake8 ./src --count --select=E9,F63,F7,F82 --show-source --statistics
-	flake8 ./src --count --max-complexity=20 --max-line-length=120 --statistics
-	PYTHONPATH=./src python -m unittest discover -s ./test
+	$(FLAKE8) ./src --count --select=E9,F63,F7,F82 --show-source --statistics
+	$(FLAKE8) ./src --count --max-complexity=20 --max-line-length=120 --statistics
+	PYTHONPATH=./src $(PYTHON) -m unittest discover -s ./test
 
 build_devenv:
-	python -m venv ./venv
-ifeq ($(OS),Windows_NT)
-	./venv/Scripts/activate.bat
-	pip install -r requirements.txt
-else
-	@bash -c "source ./venv/bin/activate && pip install -r requirements.txt"
-endif
+	if [ ! -d $(VENV_DIR) ]; then \
+		$(PYTHON) -m venv $(VENV_DIR); \
+		$(PIP) install --upgrade pip setuptools wheel; \
+		$(PIP) install -r requirements.txt; \
+	else \
+		echo "Virtualenv $(VENV_DIR) already exists"; \
+	fi
 
 .PHONY: src/hamcc/__version__.py test clean_devenv build_devenv
 

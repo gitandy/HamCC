@@ -17,10 +17,6 @@ Simply run
 
 Now fire up your preferred Development tool, point your Python environment to the newly created venv and have fun.
 
-Before running `make` again make sure to activate the venv.
-
-    # source ./venv/bin/activate
-
 
 Building on Windows
 -------------------
@@ -28,9 +24,9 @@ Building on Windows
 First you should have installed a windows build of the GNU development tools.
 I prefer a cygwin install with basic tools + make and git.
 
-Start a CMD-Prompt or Powershell in your working copy and extend PATH to contain your python path
+Start a CMD-Prompt in your working copy and make sure Python and PIP are on your path (only needed for build_devenv)
 
-    # make.bat build_devenv
-    # make.bat test
+    YOUR_PATH> make.bat build_devenv
+    YOUR_PATH> make.bat test
 
 Now fire up your preferred Development tool, point your Python environment to the newly created venv and have fun.
