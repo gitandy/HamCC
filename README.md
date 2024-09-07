@@ -86,6 +86,15 @@ able to watch for ADI file changes from other programs and immediately import ne
 If you start HamCC with an already existing ADIF file it will set the state of the last QSO (date, time, band, mode)
 and collect all available calls for the worked before check.
 
+### Loading QSOs at startup
+
+With argument `-L` HamCC creates a backup of your QSOs, loads the QSOs from the file to cache and 
+enables you to edit or delete QSOs.
+
+HamCC needs a bit more RAM until you save the QSOs to disk again.
+Expect 10 times the ADI file size. 10000 QSO is about 4MB ADI file size.
+Loading, editing and saving works smoothly even with such big amount of data. 
+
 CassiopeiaConsole minilanguage
 ------------------------------
 The single words must conform to a format to be evaluated as valid QSO information.

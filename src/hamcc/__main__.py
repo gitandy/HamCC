@@ -78,7 +78,8 @@ def read_adi(file: str) -> tuple[dict[str, str], dict[str, tuple[str, str]]]:
     return last_qso, worked_calls
 
 
-def command_console(stdscr: window, file, own_call, own_loc, own_name, append=False, contest_id='', qso_number=1):
+def command_console(stdscr: window, file, own_call, own_loc, own_name, append=False,
+                    contest_id='', qso_number=1, records: list = []):
     adi_f = None
     try:
         fmode = 'a' if append else 'w'
@@ -104,7 +105,14 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
             adi_f.flush()
             logger.info('...done')
 
+        if records:
+            last_qso = records[-1]
+
         cc = CassiopeiaConsole(own_call, own_loc, own_name, contest_id, qso_number, last_qso, worked_calls)
+        logger.info('Loading QSOs (if available)...')
+        for r in records:
+            cc.append_qso(r)
+        logger.info(f'...done {len(cc.qsos)} QSOs')
 
         # Clear screen
         stdscr.clear()
@@ -216,7 +224,7 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
 
 def main():
     import argparse
-
+    from datetime import datetime
     logger.info('Starting...')
 
     parser = argparse.ArgumentParser(description='Log Ham Radio QSOs via console',
@@ -239,6 +247,8 @@ def main():
                         help='the contest ID to activate at startup')
     parser.add_argument('-N', '--qso-number', dest='qso_number', type=int, default=1,
                         help='the first QSO number to use if a contest is activated')
+    parser.add_argument('-L', '--load-qsos', dest='load_qsos', action='store_true',
+                        help='load stored QSOs to edit them (creates backup and opens a new file)')
     parser.add_argument('-x', '--overwrite', dest='overwrite', action='store_true',
                         help='overwriting the file instead of appending the QSOs')
     parser.add_argument('--log-level', dest='log_level', choices=['DEBUG', 'INFO', 'WARNING'],
@@ -254,8 +264,20 @@ def main():
     if os.name == 'nt':
         os.system("mode con cols=120 lines=25")
 
+    records = []
+    if args.load_qsos:
+        if os.path.isfile(args.file):
+            bak_date = datetime.now().strftime('%Y-%m-%d_%H.%M.%S')
+            phead, ptail = os.path.split(args.file)
+            bak_file = os.path.join(phead, f'{bak_date}_{ptail}')
+            logger.info(f'Creating backup "{bak_file}" from "{args.file}"...')
+            os.rename(args.file, bak_file)
+            doc = adi.load(bak_file)
+            records = doc['RECORDS']
+
     wrapper(command_console, args.file, args.own_call, args.own_loc, args.own_name,
-            not args.overwrite, args.contest_id, args.qso_number)
+            not args.overwrite, args.contest_id, args.qso_number, records)
+
     logger.info('Stopped')
 
 

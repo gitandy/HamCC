@@ -73,6 +73,16 @@ class CassiopeiaConsole:
         'DV': 'DIGITALVOICE',
     }
 
+    QSO_REQ_FIELDS = ['STATION_CALLSIGN',
+                      'MY_GRIDSQUARE',
+                      'QSO_DATE',
+                      'TIME_ON',
+                      'BAND',
+                      'MODE',
+                      'CALL',
+                      'GRIDSQUARE',
+                      ]
+
     REGEX_TIME = re.compile(r'(([0-1][0-9])|(2[0-3]))([0-5][0-9])')
     REGEX_DATE = re.compile(r'([1-9][0-9]{3})((0[1-9])|(1[0-2]))((0[1-9])|([1-2][0-9])|(3[0-1]))')
     REGEX_CALL = re.compile(
@@ -250,6 +260,26 @@ class CassiopeiaConsole:
 
         self.clear()
 
+    def append_qso(self, qso: dict[str, str]):
+        """Append a QSO to stack
+        Missing fields will be initialised and the call will be added to 'worked before'
+        :param qso: the QSO as a dictionary of ADIF compatible keys and values"""
+        _qso = deepcopy(qso)
+
+        for f in self.QSO_REQ_FIELDS:
+            if f not in _qso:
+                if f == 'QSO_DATE':
+                    _qso[f] = self.__date__
+                elif f == 'TIME_ON':
+                    _qso[f] = self.__time__
+                else:
+                    _qso[f] = ''
+
+        if _qso["CALL"]:
+            self.__worked_calls__[_qso["CALL"]] = (qso['QSO_DATE'], qso['TIME_ON'])
+
+        self.__qsos__.append(_qso)
+
     def finalize_qso(self) -> str:
         """Append the current QSO to the QSO stack and prepare for the next one
         :return: the result of evaluation"""
@@ -261,7 +291,10 @@ class CassiopeiaConsole:
         if self.__qso_active__:
             qso = deepcopy(self.__cur_qso__)
 
-            res = f'Last QSO cached: {qso["CALL"]}'
+            if qso["CALL"]:
+                res = f'Last QSO cached: {qso["CALL"]}'
+            else:
+                res = f'Warning: Callsign missing for last QSO'
 
             if self.__edit_pos__ == -1:
                 self.__qsos__.append(qso)

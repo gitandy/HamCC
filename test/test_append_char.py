@@ -22,7 +22,7 @@ class TestCaseAppendChar(unittest.TestCase):
 
     def test_15_simple_lf(self):
         self.insert_sequence('\'Test')
-        self.assertIn('Last QSO cached: ', self.cc.append_char('\n'))
+        self.assertIn('Warning: Callsign missing for last QSO', self.cc.append_char('\n'))
         self.assertEqual('Test', self.cc.qsos[0]['NAME'])  # add assertion here
 
     def test_20_quoted(self):
@@ -36,7 +36,7 @@ class TestCaseAppendChar(unittest.TestCase):
     def test_30_simple_sp_lf(self):
         self.insert_sequence('YY1YYY')
         self.assertEqual('', self.cc.append_char(' '))
-        self.assertIn('Last QSO cached: ', self.cc.append_char('\n'))
+        self.assertIn('Last QSO cached: YY1YY', self.cc.append_char('\n'))
         self.assertEqual('YY1YYY', self.cc.qsos[0]['CALL'])  # add assertion here
 
     def test_40_clear(self):
