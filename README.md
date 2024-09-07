@@ -35,23 +35,28 @@ HamCC as a program
 --------------------
 You may set your call, your name and your locator via arguments.
 
-    # hamcc -c DF1ASC -n Andreas -l JO30ui
+    # hamcc -c XX1XXX -n Paul -l JN20uu
 
 See `--help` for all other arguments.
 After starting the program you will see different rows.
 
-    | */- | d 2024-08-20 | t 18:58 | B 15m | M SSB | C  | @  |
+    [ */- ] [ -c XX1XXX | -l JN20uu | -n Paul ] [ Contest information ]
+    [ 2024-08-20 d | 18:58 t | B  | M  | C  | @  ]
     QSO> _ 
     Diagnose information
 
-- The first row shows the information already available for the current QSO. 
+- the first row shows 
+  - information about the current QSO
+    - the star in the first box shows, that you are editing a new QSO. 
+      It may show the number of a cached QSO you are about to edit
+    - the dash in the first box shows, that there are no further unsaved QSOs. 
+      Otherwise, it shows the count of cached QSOs
+  - information about you
+  - contest information (if available)
+- the second row shows the information already available for the current QSO. 
   The signs left most in each box are corresponding to the format characters.
-  - The star in the first box shows, that you are editing a new QSO. 
-    It may show the number of a cached QSO you are about to edit
-  - The dash in the first box shows, that there are no further unsaved QSOs. 
-    Otherwise, it shows the count of cached QSOs
-- The second row shows the command prompt where you will type in the QSO
-- The third row may show status or format error information
+- the third row shows the command prompt where you will type in the QSO
+- The fourth row may show status or format error information
 
 Just start typing at the command prompt.
 
@@ -85,7 +90,7 @@ CassiopeiaConsole minilanguage
 ------------------------------
 The single words must conform to a format to be evaluated as valid QSO information.
 
-Example session
+Example session (you are Paul, XX1XXX at JN20uu)
 
 1. Type in `8` or `80m` followed by SPACE and HamCC recons you are using the 80m band 
 2. Now type `s` or `ssb` and HamCC saves the mode SSB after you hit SPACE
@@ -95,14 +100,17 @@ Example session
 
 Your console should look something like
 
-    | */- | d 2024-08-20 | t 19:37 | B 80m | M SSB | C DF1ASC | @  | ' Andreas | # Ant Dipol, Rig FT-991A |
-    QSO> 8 s df1asc 'Andreas "#Ant Dipol, Rig FT-991A" _
+    [ */- ] [ -c XX1XXX | -l JN20uu | -n Paul ]
+    [ 2024-08-20 d | 19:37 t | B 80m | M SSB | C DF1ASC | @  | . 59 | , 59 | ' Andreas | # Ant Dipol, Rig FT-991A ]
+    QSO> 8 s df1asc 'Andreas "#Ant Dipol, Rig FT-991A"
+
 
 After hitting ENTER the QSO will be cached (number of cached QSOs is displayed, see marking) and some 
 information will be stored for the next QSO.
 
         v
-    | */1 | d 2024-08-20 | t 19:37 | B 80m | M SSB | C  | @  |
+    [ */1 ] [ -c XX1XXX | -l JN20uu | -n Paul ]
+    [ 2024-08-20 d | 19:38 t | B 80m | M SSB | C DF1ASC | @  | . 59 | , 59 ]
     QSO> _
 
 The table shows all available pre- and postfixes. The following will work for API and if run as program.
@@ -166,12 +174,12 @@ HamCC adds two shortcuts for modes
 * `dv` for DIGITALVOICE
 
 ### Contests
-If you typed in a contest id HamCC starts to increase a QSO contest reference (see marked in example)
+If you typed in a contest id HamCC starts to increase a QSO contest reference (see `-N`)
 which you may want to communicate to your QSO partners.
 Changing the contest id resets the QSO counter.
 
-                                                                       v
-    | d 2024-08-20 | t 13:06 | B 10m | M SSB | C  | @  | $ ARRL-10 | N 1 | % 007 |
+    [ */- ] [ -c XX1XXX | -l JN20uu | -n Paul ] 
+    [ d 2024-08-20 | t 13:06 | B 10m | M SSB | C  | @  | $ ARRL-10 | -N 1 | % 007 | . 59 | , 59 ]
     QSO> $ARRL-10 %007 _
 
 The received contest data will simply be stored without further handling (currently).

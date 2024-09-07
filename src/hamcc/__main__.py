@@ -17,9 +17,13 @@ from . import __proj_name__, __version_str__, __author_name__, __copyright__
 from .hamcc import CassiopeiaConsole, adif_date2iso, adif_time2iso
 
 PROMPT = 'QSO> '
+LN_MYDATA = 0
+LN_QSODATA = 1
+LN_INPUT = 2
+LN_INFO = 3
 
 
-def qso2str(qso, pos, cnt):
+def qso2str(qso, pos, cnt) -> tuple[str, str]:
     d = adif_date2iso(qso["QSO_DATE"])
     t = adif_time2iso(qso["TIME_ON"])
 
@@ -37,16 +41,29 @@ def qso2str(qso, pos, cnt):
             val = qso[f]
             if f == 'FREQ':
                 val = str(float(val) * 1000)
-            opt_info += f' {i} {val} |'
+            if f in ('FREQ', 'TX_POWER'):
+                opt_info += f'| {val} {i} '
+            else:
+                opt_info += f'| {i} {val} '
 
     cntst_info = ''
     if 'CONTEST_ID' in qso and qso["CONTEST_ID"]:
-        cntst_info = f' $ {qso["CONTEST_ID"]} | N {qso["STX"]} | % {qso["SRX"] if "SRX" in qso else ""} |'
+        cntst_info = f'[ $ {qso["CONTEST_ID"]} | -N {qso["STX"]} | % {qso["SRX"] if "SRX" in qso else ""} ]'
 
-    loc = f'{qso["QTH"]} ({qso["GRIDSQUARE"]})' if 'QTH' in qso else qso["GRIDSQUARE"]
+    loc = ''
+    if 'GRIDSQUARE' in qso:
+        loc = f'{qso["QTH"]} ({qso["GRIDSQUARE"]})' if 'QTH' in qso else qso["GRIDSQUARE"]
 
-    return (f'| {"*" if pos == -1 else pos + 1}/{"-" if cnt == 0 else cnt} | d {d} | t {t} | B {qso["BAND"]} | '
-            f'M {qso["MODE"]} | C {qso["CALL"]} | @ {loc} |{cntst_info}{opt_info}')
+    my_loc = ''
+    if 'MY_GRIDSQUARE' in qso:
+        my_loc = f'{qso["MY_CITY"]} ({qso["MY_GRIDSQUARE"]})' if 'MY_CITY' in qso else qso["MY_GRIDSQUARE"]
+
+    line1 = (f'[ {"*" if pos == -1 else pos + 1}/{"-" if cnt == 0 else cnt} ] '
+             f'[ -c {qso["STATION_CALLSIGN"]} | -l {my_loc} | -n {qso.get("MY_NAME", "")} ] {cntst_info}')
+    line2 = (f'[ {d} d | {t} t | B {qso["BAND"]} | '
+             f'M {qso["MODE"]} | C {qso["CALL"]} | @ {loc} {opt_info}]')
+
+    return line1, line2
 
 
 def read_adi(file: str) -> tuple[dict[str, str], dict[str, tuple[str, str]]]:
@@ -55,7 +72,7 @@ def read_adi(file: str) -> tuple[dict[str, str], dict[str, tuple[str, str]]]:
 
     doc = adi.load(file)
     for r in doc['RECORDS']:
-        if 'CALL' in r and 'QSO_DATE' in r and 'TIME_ON' in r:
+        if all(f in r for f in ('CALL', 'QSO_DATE', 'TIME_ON')):
             last_qso = r
             worked_calls[r['CALL']] = (r['QSO_DATE'], r['TIME_ON'])
     return last_qso, worked_calls
@@ -91,22 +108,28 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
 
         # Clear screen
         stdscr.clear()
-        stdscr.addstr(0, 0, qso2str(cc.current_qso, cc.edit_pos, 0))
+        ln1, ln2 = qso2str(cc.current_qso, cc.edit_pos, 0)
+        stdscr.addstr(LN_MYDATA, 0, ln1)
+        stdscr.addstr(LN_QSODATA, 0, ln2)
+
         fname = '...' + adi_f.name[-40:] if len(adi_f.name) > 40 else adi_f.name
         last_qso_str = (f'. Last QSO: {last_qso["CALL"]} '
                         f'worked on {adif_date2iso(last_qso["QSO_DATE"])} '
                         f'at {adif_time2iso(last_qso["TIME_ON"])}') if last_qso and 'CALL' in last_qso else ''
-        stdscr.addstr(2, 0, f'{"Appending to" if append else "Overwriting"} "{fname}"{last_qso_str}')
-        stdscr.addstr(1, 0, PROMPT)
+        stdscr.addstr(LN_INFO, 0, f'{"Appending to" if append else "Overwriting"} "{fname}"{last_qso_str}')
+        stdscr.addstr(LN_INPUT, 0, PROMPT)
 
         stdscr.refresh()
         stdscr.nodelay(True)
-        
+
         try:
             logger.info('Entering main loop...')
             while True:
                 py, px = stdscr.getyx()
-                stdscr.addstr(0, 0, qso2str(cc.current_qso, cc.edit_pos, len(cc.qsos)))
+                ln1, ln2 = qso2str(cc.current_qso, cc.edit_pos, len(cc.qsos))
+                stdscr.addstr(LN_MYDATA, 0, ln1)
+                stdscr.clrtoeol()
+                stdscr.addstr(LN_QSODATA, 0, ln2)
                 stdscr.clrtoeol()
                 stdscr.addstr(py, px, '')
 
@@ -119,32 +142,32 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
 
                 if c == 'KEY_UP':
                     cc.load_prev()
-                    stdscr.addstr(2, 0, '')
+                    stdscr.addstr(LN_INFO, 0, '')
                     stdscr.clrtoeol()
-                    stdscr.addstr(1, 0, PROMPT)
+                    stdscr.addstr(LN_INPUT, 0, PROMPT)
                     stdscr.clrtoeol()
                 elif c == 'KEY_DOWN':
                     cc.load_next()
-                    stdscr.addstr(2, 0, '')
+                    stdscr.addstr(LN_INFO, 0, '')
                     stdscr.clrtoeol()
-                    stdscr.addstr(1, 0, PROMPT)
+                    stdscr.addstr(LN_INPUT, 0, PROMPT)
                     stdscr.clrtoeol()
                 elif c == 'KEY_DC':
                     res = cc.del_selected()
                     if res >= 0:
-                        stdscr.addstr(2, 0, f'Deleted QSO #{res + 1}')
+                        stdscr.addstr(LN_INFO, 0, f'Deleted QSO #{res + 1}')
                     else:
-                        stdscr.addstr(2, 0, '')
+                        stdscr.addstr(LN_INFO, 0, '')
                     stdscr.clrtoeol()
-                    stdscr.addstr(1, 0, PROMPT)
+                    stdscr.addstr(LN_INPUT, 0, PROMPT)
                     stdscr.clrtoeol()
                 elif len(c) > 1 or c in '\r\t':
                     continue
                 elif c == '\n':  # Flush QSO to stack
                     res = cc.append_char(c)
-                    stdscr.addstr(2, 0, res)
+                    stdscr.addstr(LN_INFO, 0, res)
                     stdscr.clrtoeol()
-                    stdscr.addstr(1, 0, PROMPT)
+                    stdscr.addstr(LN_INPUT, 0, PROMPT)
                     stdscr.clrtoeol()
                 elif c == '!':  # Write QSOs to disk
                     cc.append_char('\n')
@@ -155,16 +178,16 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
                         adi_f.flush()
                         i += 1
                         msg = f'{i} QSO(s) written to disk'
-                    stdscr.addstr(2, 0, msg)
+                    stdscr.addstr(LN_INFO, 0, msg)
                     stdscr.clrtoeol()
-                    stdscr.addstr(1, 0, PROMPT)
+                    stdscr.addstr(LN_INPUT, 0, PROMPT)
                     stdscr.clrtoeol()
                 else:  # Concat sequence
                     res = cc.append_char(c)
-                    stdscr.addstr(2, 0, res)
+                    stdscr.addstr(LN_INFO, 0, res)
                     stdscr.clrtoeol()
                     if c in ('~', '?'):
-                        stdscr.addstr(1, 0, PROMPT)
+                        stdscr.addstr(LN_INPUT, 0, PROMPT)
                         stdscr.clrtoeol()
                     else:
                         stdscr.addstr(py, px, '')
