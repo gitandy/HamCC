@@ -40,7 +40,7 @@ src/hamcc/__version__.py:
 
 bdist_win: NO_OBSOLETE=-no-obsolete
 bdist_win: clean all test
-	PYTHONPATH=./src python setup_win.py bdist -d dist_exe;
+	PYTHONPATH=./src $(PYTHON) setup_win.py bdist -d dist_exe;
 
 dist: NO_OBSOLETE=-no-obsolete
 dist: clean all test
