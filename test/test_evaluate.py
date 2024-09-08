@@ -158,9 +158,39 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertRegex(self.cc.current_qso['QSO_DATE'],
                          r'([1-9][0-9]{3})((0[1-9])|(1[0-2]))((0[1-9])|([1-2][0-9])|(3[0-2]))')
 
+    def test_120_extended_c(self):
+        self.assertEqual('', self.cc.evaluate('-cBB1BBB'))
+        self.assertEqual('BB1BBB', self.cc.current_qso['STATION_CALLSIGN'])
+
+        self.assertEqual('Error: Wrong call format', self.cc.evaluate('-cBB1BBB1'))
+        self.assertEqual('BB1BBB', self.cc.current_qso['STATION_CALLSIGN'])
+
+    def test_122_extended_l(self):
+        self.assertEqual('', self.cc.evaluate('-lCheck(BB22bb)'))
+        self.assertEqual('BB22bb', self.cc.current_qso['MY_GRIDSQUARE'])
+        self.assertEqual('Check', self.cc.current_qso['MY_CITY'])
+
+        self.assertEqual('', self.cc.evaluate('-lBB22bb'))
+        self.assertEqual('BB22bb', self.cc.current_qso['MY_GRIDSQUARE'])
+        self.assertNotIn('MY_CITY', self.cc.current_qso)
+
+        self.assertEqual('Error: Wrong QTH/maidenhead format', self.cc.evaluate('-lZZ11aa'))
+        self.assertEqual('BB22bb', self.cc.current_qso['MY_GRIDSQUARE'])
+        self.assertEqual('Error: Wrong QTH/maidenhead format', self.cc.evaluate('-lTestAA22aa)'))
+        self.assertEqual('BB22bb', self.cc.current_qso['MY_GRIDSQUARE'])
+
+    def test_124_extended_n(self):
+        self.assertEqual('', self.cc.evaluate('-nTestuser'))
+        self.assertEqual('Testuser', self.cc.current_qso['MY_NAME'])
+        self.assertEqual('', self.cc.evaluate('-nTest_User'))
+        self.assertEqual('Test User', self.cc.current_qso['MY_NAME'])
+
     @unittest.expectedFailure
-    def test_120_extended(self):
+    def test_126_extended_N(self):
         self.fail('Test missing')
+
+    def test_126_extended_V(self):
+        self.assertIn('HamCC: ', self.cc.evaluate('-V'))
 
     def test_130_call(self):
         self.assertEqual('', self.cc.evaluate('AA1AAA'))

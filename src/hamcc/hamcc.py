@@ -441,10 +441,19 @@ class CassiopeiaConsole:
             self.__my_call__ = seq[2:]
             self.__cur_qso__['STATION_CALLSIGN'] = self.__my_call__
         elif seq.startswith('-l'):
-            if not self.check_format(self.REGEX_LOCATOR, seq[2:]):
-                return 'Error: Wrong maidenhead format'
-            self.__my_loc__ = seq[2:]
-            self.__cur_qso__['MY_GRIDSQUARE'] = self.__my_loc__
+            if (not self.check_format(self.REGEX_LOCATOR, seq[2:]) and not
+            self.check_qth(seq[2:])):
+                return 'Error: Wrong QTH/maidenhead format'
+            if self.check_format(self.REGEX_LOCATOR, seq[2:]):
+                self.__my_loc__ = seq[2:4].upper() + seq[4:]
+                self.__cur_qso__['MY_GRIDSQUARE'] = self.__my_loc__
+                if 'MY_CITY' in self.__cur_qso__:
+                    self.__cur_qso__.pop('MY_CITY')
+                    self.__my_qth__ = ''
+            else:
+                self.__my_qth__, self.__my_loc__ = self.check_qth(seq[2:])
+                self.__cur_qso__['MY_GRIDSQUARE'] = self.__my_loc__
+                self.__cur_qso__['MY_CITY'] = self.__my_qth__
         elif seq.startswith('-n'):
             self.__my_name__ = seq[2:].replace('_', ' ')
             self.__cur_qso__['MY_NAME'] = self.__my_name__
