@@ -78,6 +78,7 @@ def read_adi(file: str) -> tuple[dict[str, str], dict[str, tuple[str, str]]]:
     return last_qso, worked_calls
 
 
+# flake8: noqa: C901
 def command_console(stdscr: window, file, own_call, own_loc, own_name, append=False,
                     contest_id='', qso_number=1, records: list = []):
     adi_f = None

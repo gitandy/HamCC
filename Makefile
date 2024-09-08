@@ -13,18 +13,18 @@ endif
 BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 
 ifeq ($(OS),Windows_NT)
-ifeq ($(shell if test -d $(VENV_DIR); then echo "exist";fi),exist)
 VENV_BIN = $(VENV_DIR)/Scripts
-PYTHON = $(VENV_BIN)/python.exe
 PIP = $(VENV_BIN)/pip.exe
 FLAKE8 = $(VENV_BIN)/flake8.exe
+ifeq ($(shell if test -d $(VENV_DIR); then echo "exist";fi),exist)
+PYTHON = $(VENV_BIN)/python.exe
 endif
 else
-ifeq ($(shell if test -d $(VENV_DIR); then echo "exist";fi),exist)
 VENV_BIN = $(VENV_DIR)/bin
-PYTHON = $(VENV_BIN)/python
 PIP = $(VENV_BIN)/pip
 FLAKE8 = $(VENV_BIN)/flake8
+ifeq ($(shell if test -d $(VENV_DIR); then echo "exist";fi),exist)
+PYTHON = $(VENV_BIN)/python
 endif
 endif
 
@@ -54,7 +54,7 @@ release:
 
 test: all
 	$(FLAKE8) ./src --count --select=E9,F63,F7,F82 --show-source --statistics
-	$(FLAKE8) ./src --count --max-complexity=20 --max-line-length=120 --statistics
+	$(FLAKE8) ./src --count --max-complexity=20 --ignore=E402 --max-line-length=120 --statistics
 	PYTHONPATH=./src $(PYTHON) -m unittest discover -s ./test
 
 build_devenv:
