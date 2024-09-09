@@ -132,7 +132,10 @@ class CassiopeiaConsole:
 
         # Special
         self.__contest_id__ = contest_id
-        self.__cntstqso_id__ = int(qso_number) if self.__contest_id__ else 0
+        try:
+            self.__cntstqso_id__ = int(qso_number) if self.__contest_id__ else 0
+        except ValueError:
+            self.__cntstqso_id__ = qso_number
         self.__worked_calls__: dict[str, tuple[str, str]] = init_worked if type(init_worked) is dict else {}
 
         self.__edit_pos__ = -1
@@ -235,8 +238,12 @@ class CassiopeiaConsole:
 
         if self.__contest_id__:
             self.__cur_qso__['CONTEST_ID'] = self.__contest_id__
-            self.__cur_qso__['STX'] = str(self.__cntstqso_id__)
-            self.__cur_qso__['STX_STRING'] = f'{self.__cntstqso_id__:03d}'
+            if type(self.__cntstqso_id__) is int:
+                self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
+                self.__cur_qso__['STX_STRING'] = f'{self.__cntstqso_id__:03d}'
+            else:
+                self.__cur_qso__.pop('STX', '')
+                self.__cur_qso__['STX_STRING'] = self.__cntstqso_id__
 
     def reset(self):
         """Reset whole session"""
@@ -255,7 +262,7 @@ class CassiopeiaConsole:
 
         # Special
         self.__contest_id__ = ''
-        self.__cntstqso_id__ = 0
+        self.__cntstqso_id__: int | str = 0
         self.__worked_calls__ = []
 
         self.clear()
@@ -306,8 +313,12 @@ class CassiopeiaConsole:
             self.clear()
 
             if self.__contest_id__:
-                self.__cntstqso_id__ += 1
-                self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
+                if type(self.__cntstqso_id__) is int:
+                    self.__cntstqso_id__ += 1
+                    self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
+                    self.__cur_qso__['STX_STRING'] = f'{self.__cntstqso_id__:03d}'
+                else:
+                    self.__cur_qso__['STX_STRING'] = self.__cntstqso_id__
 
         return res
 
@@ -426,11 +437,17 @@ class CassiopeiaConsole:
             self.__cntstqso_id__ = 1
             self.__contest_id__ = seq[1:].upper()
             self.__cur_qso__['CONTEST_ID'] = self.__contest_id__
-            self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
+            self.__cur_qso__['STX'] = '001'
+            self.__cur_qso__['STX_STRING'] = '001'
+            self.__cur_qso__['SRX_STRING'] = ''
         else:
             self.__contest_id__ = ''
             if 'CONTEST_ID' in self.__cur_qso__:
                 self.__cur_qso__.pop('CONTEST_ID')
+                self.__cur_qso__.pop('STX', '')
+                self.__cur_qso__.pop('STX_STRING', '')
+                self.__cur_qso__.pop('SRX', '')
+                self.__cur_qso__.pop('SRX_STRING', '')
             self.__cntstqso_id__ = 0
         return ''
 
@@ -462,8 +479,11 @@ class CassiopeiaConsole:
                 try:
                     self.__cntstqso_id__ = int(seq[2:])
                     self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
+                    self.__cur_qso__['STX_STRING'] = f'{self.__cntstqso_id__:03d}'
                 except ValueError:
-                    return f'Error: Not a valid number {seq[2:]}'
+                    self.__cntstqso_id__ = seq[2:].upper()
+                    self.__cur_qso__.pop('STX')
+                    self.__cur_qso__['STX_STRING'] = self.__cntstqso_id__
             else:
                 return 'Error: No active contest'
         elif seq == '-V':

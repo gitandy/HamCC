@@ -48,7 +48,8 @@ def qso2str(qso, pos, cnt) -> tuple[str, str]:
 
     cntst_info = ''
     if 'CONTEST_ID' in qso and qso["CONTEST_ID"]:
-        cntst_info = f'[ $ {qso["CONTEST_ID"]} | -N {qso["STX"]} | % {qso["SRX"] if "SRX" in qso else ""} ]'
+        cntst_info = (f'[ $ {qso["CONTEST_ID"]} | -N {qso.get("STX", qso["STX_STRING"])} | '
+                      f'% {qso.get("SRX", qso.get("SRX_STRING", ""))} ]')
 
     loc = ''
     if 'GRIDSQUARE' in qso:
