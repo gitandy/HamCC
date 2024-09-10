@@ -50,9 +50,8 @@ def qso2str(qso, pos, cnt) -> tuple[str, str]:
     if 'CONTEST_ID' in qso and qso["CONTEST_ID"]:
         event_info = (f'[ $ {qso["CONTEST_ID"]} | -N {qso.get("STX", qso["STX_STRING"])} | '
                       f'% {qso.get("SRX", qso.get("SRX_STRING", ""))} ]')
-    #elif xOTA
-        # event_info = (f'[ $ {qso["CONTEST_ID"]} | -N {qso.get("STX", qso["STX_STRING"])} | '
-        #           f'% {qso.get("SRX", qso.get("SRX_STRING", ""))} ]')
+    elif 'MY_SIG' in qso:
+        event_info = f'[ $ {qso["MY_SIG"]} | -N {qso["MY_SIG_INFO"]} | % {qso.get("SIG_INFO", "")} ]'
 
     loc = ''
     if 'GRIDSQUARE' in qso:
@@ -249,7 +248,7 @@ def main():
     parser.add_argument('-n', '--name', dest='own_name', default='',
                         help='your name')
     parser.add_argument('-E', '--event', dest='event', default='',
-                        help='the event (contest ID) to activate at startup')
+                        help='the event (contest ID or one of POTA, SOTA) to activate at startup')
     parser.add_argument('-N', '--exchange', dest='exchange', default=1,
                         help='the first QSO number to use if a contest is activated or a textual exchange')
     parser.add_argument('-L', '--load-qsos', dest='load_qsos', action='store_true',

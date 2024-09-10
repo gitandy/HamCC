@@ -132,10 +132,14 @@ class CassiopeiaConsole:
 
         # Special
         self.__event__ = event
-        try:
-            self.__event_ref__ = int(event_ref) if self.__event__ else 0
-        except ValueError:
+        if not self.is_sig():
+            try:
+                self.__event_ref__ = int(event_ref) if self.__event__ else 0
+            except ValueError:
+                self.__event_ref__ = event_ref
+        else:
             self.__event_ref__ = event_ref
+
         self.__worked_calls__: dict[str, tuple[str, str]] = init_worked if type(init_worked) is dict else {}
 
         self.__edit_pos__ = -1
@@ -145,6 +149,9 @@ class CassiopeiaConsole:
         self.__cur_qso__ = {}
         self.__qso_active__ = False
         self.clear()
+
+    def is_sig(self):
+        return self.__event__ in ('POTA', 'SOTA')
 
     def append_char(self, char: str) -> str:
         """Append a single char to the sequence stack
@@ -240,13 +247,18 @@ class CassiopeiaConsole:
             self.clear_event()
 
     def clear_event(self):
-        self.__cur_qso__['CONTEST_ID'] = self.__event__
-        if type(self.__event_ref__) is int:
-            self.__cur_qso__['STX'] = f'{self.__event_ref__:03d}'
-            self.__cur_qso__['STX_STRING'] = f'{self.__event_ref__:03d}'
+        if self.is_sig():
+            self.__cur_qso__[f'MY_SIG'] = self.__event__
+            self.__cur_qso__[f'MY_SIG_INFO'] = self.__event_ref__
+            # self.__cur_qso__[f'MY_{self.__event__}_REF'] = self.__event_ref__  # unused?
         else:
-            self.__cur_qso__.pop('STX', '')
-            self.__cur_qso__['STX_STRING'] = self.__event_ref__
+            self.__cur_qso__['CONTEST_ID'] = self.__event__
+            if type(self.__event_ref__) is int:
+                self.__cur_qso__['STX'] = f'{self.__event_ref__:03d}'
+                self.__cur_qso__['STX_STRING'] = f'{self.__event_ref__:03d}'
+            else:
+                self.__cur_qso__.pop('STX', '')
+                self.__cur_qso__['STX_STRING'] = self.__event_ref__
 
     def reset(self):
         """Reset whole session"""
@@ -321,12 +333,13 @@ class CassiopeiaConsole:
         return res
 
     def finalize_event(self):
-        if type(self.__event_ref__) is int:
-            self.__event_ref__ += 1
-            self.__cur_qso__['STX'] = f'{self.__event_ref__:03d}'
-            self.__cur_qso__['STX_STRING'] = f'{self.__event_ref__:03d}'
-        else:
-            self.__cur_qso__['STX_STRING'] = self.__event_ref__
+        if not self.is_sig():
+            if type(self.__event_ref__) is int:
+                self.__event_ref__ += 1
+                self.__cur_qso__['STX'] = f'{self.__event_ref__:03d}'
+                self.__cur_qso__['STX_STRING'] = f'{self.__event_ref__:03d}'
+            else:
+                self.__cur_qso__['STX_STRING'] = self.__event_ref__
 
     @property
     def qsos(self) -> list[dict]:
@@ -440,21 +453,38 @@ class CassiopeiaConsole:
 
     def evaluate_event(self, seq: str) -> str:
         if len(seq) > 1:
-            self.__event_ref__ = 1
-            self.__event__ = seq[1:].upper()
-            self.__cur_qso__['CONTEST_ID'] = self.__event__
-            self.__cur_qso__['STX'] = '001'
-            self.__cur_qso__['STX_STRING'] = '001'
-            self.__cur_qso__['SRX_STRING'] = ''
+            self.__event__ = seq
+            if self.is_sig():
+                self.__event_ref__ = ''
+                self.__cur_qso__[f'MY_SIG'] = self.__event__
+                self.__cur_qso__[f'MY_SIG_INFO'] = self.__event_ref__
+                # self.__cur_qso__[f'MY_{self.__event__}_REF'] = self.__event_ref__  # unused?
+            else:
+                self.__event_ref__ = 1
+                self.__cur_qso__['CONTEST_ID'] = self.__event__
+                self.__cur_qso__['STX'] = '001'
+                self.__cur_qso__['STX_STRING'] = '001'
+                self.__cur_qso__['SRX_STRING'] = ''
         else:
             self.__event__ = ''
-            if 'CONTEST_ID' in self.__cur_qso__:
-                self.__cur_qso__.pop('CONTEST_ID')
-                self.__cur_qso__.pop('STX', '')
-                self.__cur_qso__.pop('STX_STRING', '')
-                self.__cur_qso__.pop('SRX', '')
-                self.__cur_qso__.pop('SRX_STRING', '')
             self.__event_ref__ = 0
+
+            # Cleanup SIG
+            self.__cur_qso__.pop('SIG', '')
+            self.__cur_qso__.pop('SIG_INFO', '')
+            self.__cur_qso__.pop('MY_SIG', '')
+            self.__cur_qso__.pop('MY_SIG_INFO', '')
+            # for x in ('POTA', 'SOTA'):  # unused?
+            #     self.__cur_qso__.pop(f'{x}_REF', '')
+            #     self.__cur_qso__.pop(f'MY_{x}_REF', '')
+
+            # Cleanup contest
+            self.__cur_qso__.pop('CONTEST_ID', '')
+            self.__cur_qso__.pop('STX', '')
+            self.__cur_qso__.pop('STX_STRING', '')
+            self.__cur_qso__.pop('SRX', '')
+            self.__cur_qso__.pop('SRX_STRING', '')
+
         return ''
 
     def evaluate_extended(self, seq: str) -> str:
@@ -530,7 +560,7 @@ class CassiopeiaConsole:
                     self.__cur_qso__['GRIDSQUARE'] = loc
                     self.__cur_qso__['QTH'] = qth
             elif seq.startswith('$'):  # Event
-                return self.evaluate_event(seq)
+                return self.evaluate_event(seq[1:].upper())
             elif seq.startswith('%'):  # Event QSO ref
                 if not self.__event__:
                     return 'Error: No active event'
@@ -565,18 +595,29 @@ class CassiopeiaConsole:
         return ''
 
     def evaluate_event_ref(self, seq):
-        try:
-            self.__cur_qso__['SRX'] = str(int(seq[1:]))
-        except ValueError:
-            pass
-        self.__cur_qso__['SRX_STRING'] = seq[1:].upper()
+        if self.is_sig():
+            self.__cur_qso__[f'SIG'] = self.__event__
+            self.__cur_qso__[f'SIG_INFO'] = seq[1:].upper()
+            # self.__cur_qso__[f'{self.__event__}_REF'] = seq[1:].upper()  # unused?
+        else:
+            try:
+                self.__cur_qso__['SRX'] = str(int(seq[1:]))
+            except ValueError:
+                pass
+            self.__cur_qso__['SRX_STRING'] = seq[1:].upper()
 
     def evaluate_own_event_ref(self, seq):
-        try:
-            self.__event_ref__ = int(seq[2:])
-            self.__cur_qso__['STX'] = f'{self.__event_ref__:03d}'
-            self.__cur_qso__['STX_STRING'] = f'{self.__event_ref__:03d}'
-        except ValueError:
+        if self.is_sig():
             self.__event_ref__ = seq[2:].upper()
-            self.__cur_qso__.pop('STX')
-            self.__cur_qso__['STX_STRING'] = self.__event_ref__
+            self.__cur_qso__[f'MY_SIG'] = self.__event__
+            self.__cur_qso__[f'MY_SIG_INFO'] = self.__event_ref__
+            # self.__cur_qso__[f'MY_{self.__event__}_REF'] = self.__event_ref__  # unused?
+        else:
+            try:
+                self.__event_ref__ = int(seq[2:])
+                self.__cur_qso__['STX'] = f'{self.__event_ref__:03d}'
+                self.__cur_qso__['STX_STRING'] = f'{self.__event_ref__:03d}'
+            except ValueError:
+                self.__event_ref__ = seq[2:].upper()
+                self.__cur_qso__.pop('STX')
+                self.__cur_qso__['STX_STRING'] = self.__event_ref__

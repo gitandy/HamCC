@@ -63,13 +63,57 @@ class TestCaseEvaluateEvent(unittest.TestCase):
         self.assertNotIn('SRX', self.cc.current_qso)
         self.assertNotIn('SRX_STRING', self.cc.current_qso)
 
-    def test_030_no_contest(self):
+    def test_030_no_event(self):
         self.assertEqual('Error: No active event', self.cc.evaluate('-N333'))
         self.assertNotIn('STX', self.cc.current_qso)
         self.assertNotIn('STX_STRING', self.cc.current_qso)
+        self.assertNotIn('MY_SIG_INFO', self.cc.current_qso)
         self.assertEqual('Error: No active event', self.cc.evaluate('%444'))
         self.assertNotIn('SRX', self.cc.current_qso)
         self.assertNotIn('SRX_STRING', self.cc.current_qso)
+        self.assertNotIn('SIG_INFO', self.cc.current_qso)
+
+    def test_040_xota(self):
+        # New contest
+        self.assertEqual('', self.cc.evaluate('$sota'))
+        self.assertEqual('SOTA', self.cc.current_qso['MY_SIG'])
+
+        self.assertEqual('', self.cc.evaluate('$pota'))
+        self.assertEqual('POTA', self.cc.current_qso['MY_SIG'])
+
+        # Set non number exchanges
+        self.assertEqual('', self.cc.evaluate('-Nde-0011'))
+        self.assertEqual('DE-0011', self.cc.current_qso['MY_SIG_INFO'])
+        self.assertEqual('', self.cc.evaluate('%de-0022'))
+        self.assertEqual('DE-0022', self.cc.current_qso['SIG_INFO'])
+        self.assertEqual('POTA', self.cc.current_qso['SIG'])
+
+        # Push QSO and check reuse non number and cleared sent exch
+        self.assertEqual('Warning: Callsign missing for last QSO', self.cc.finalize_qso())
+        self.assertEqual('POTA', self.cc.current_qso['MY_SIG'])
+        self.assertEqual('DE-0011', self.cc.current_qso['MY_SIG_INFO'])
+        self.assertNotIn('SIG', self.cc.current_qso)
+        self.assertNotIn('SIG_INFO', self.cc.current_qso)
+
+    def test_050_cleanup(self):
+        self.assertEqual('', self.cc.evaluate('$sota'))
+        self.assertEqual('', self.cc.evaluate('-Nde-0011'))
+        self.assertEqual('', self.cc.evaluate('%de-0022'))
+        self.assertEqual('', self.cc.evaluate('$contest'))
+        self.assertEqual('', self.cc.evaluate('%002'))
+        self.assertEqual('', self.cc.evaluate('$'))  # Deactivate event
+
+        # Check proper cleanup
+        self.assertNotIn('CONTEST_ID', self.cc.current_qso)
+        self.assertNotIn('SRX', self.cc.current_qso)
+        self.assertNotIn('SRX_STRING', self.cc.current_qso)
+        self.assertNotIn('STX', self.cc.current_qso)
+        self.assertNotIn('STX_STRING', self.cc.current_qso)
+
+        self.assertNotIn('MY_SIG', self.cc.current_qso)
+        self.assertNotIn('MY_SIG_INFO', self.cc.current_qso)
+        self.assertNotIn('SIG', self.cc.current_qso)
+        self.assertNotIn('SIG_INFO', self.cc.current_qso)
 
 
 if __name__ == '__main__':

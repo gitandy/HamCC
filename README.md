@@ -16,7 +16,7 @@ but can also be used as standalone console logger.
 ### Functions
 - call with format check
 - locator/QTH with format check
-- event mode for contests
+- event mode for contests or xOTA
 - worked before detection
 - storing QSO in ADIF ADI format
 - automatic date and time
@@ -40,7 +40,7 @@ You may set your call, your name and your locator via arguments.
 See `--help` for all other arguments.
 After starting the program you will see different rows.
 
-    [ */- ] [ -c XX1XXX | -l JN20uu | -n Paul ] [ Contest information ]
+    [ */- ] [ -c XX1XXX | -l JN20uu | -n Paul ] [ Event information ]
     [ 2024-08-20 d | 18:58 t | B  | M  | C  | @  ]
     QSO> _ 
     Diagnose information
@@ -52,7 +52,7 @@ After starting the program you will see different rows.
     - the dash in the first box shows, that there are no further unsaved QSOs. 
       Otherwise, it shows the count of cached QSOs
   - information about you
-  - contest information (if available)
+  - event information (contest or xOTA if available)
 - the second row shows the information already available for the current QSO. 
   The signs left most in each box are corresponding to the format characters.
 - the third row shows the command prompt where you will type in the QSO
@@ -127,32 +127,32 @@ The table shows all available pre- and postfixes. The following will work for AP
 Placeholder x for characters and 9 for numbers.
 Types marked with auto are prefilled but can be overwritten. Types marked with memory are retained for the session.
 
-| Info         | Format                   | Type    | Comments                                        |
-|--------------|--------------------------|---------|-------------------------------------------------|
-| Callsign     | xx9xx                    |         | format checked                                  |
-| Locator/QTH  | @xx99xx or @QTH(Locator) |         | format checked                                  |
-| Name         | 'xxxx                    |         | _ for spaces                                    |
-| Comment      | #xxxx                    |         | _ for spaces                                    |
-| Band         | valid ADIF band          | memory  |                                                 |
-| Mode         | valid ADIF mode          | memory  |                                                 | 
-| RST rcvd     | .599                     | auto    | default CW 599, phone 59                        |
-| RST sent     | ,599                     | auto    | default CW 599, phone 59                        |
-| QSL rcvd     | *                        |         | toggles the information                         |
-| Event ID     | $xxxxxx                  | memory  | Contest ID                                      |
-| Rcvd Exch    | %xxxxx                   |         | Contest exchange                                |
-| Time         | HHMMt                    | memory  | partly time will be filled                      |
-| Date         | YYYYMMDDd                | memory  | partly date will be filled                      |
-| Date/Time    | =                        | auto    | sync date/time to now                           |
-| Frequency    | 99999f                   |         | in kHz                                          |
-| TX Power     | 99p                      |         | in W                                            | 
-| Your Call    | -cxx9xx                  | memory  |                                                 | 
-| Your Locator | -lxx99xx                 | memory  |                                                 | 
-| Your Name    | -nxxxx                   | memory  | _ for spaces                                    |
-| Finish QSO   | linefeed                 | command | ENTER-Key                                       |
-| Clear QSO    | ~                        | command | clears input not cached QSO                     |
-| Show QSO     | ?                        | command |                                                 |
-| Sent Exch    | -N9 or -Nxx              | auto    | set start value (if number) for contest QSO No. |
-| Show version | -V                       | command |                                                 |
+| Info         | Format                   | Type    | Comments                                                        |
+|--------------|--------------------------|---------|-----------------------------------------------------------------|
+| Callsign     | xx9xx                    |         | format checked                                                  |
+| Locator/QTH  | @xx99xx or @QTH(Locator) |         | format checked                                                  |
+| Name         | 'xxxx                    |         | _ for spaces                                                    |
+| Comment      | #xxxx                    |         | _ for spaces                                                    |
+| Band         | valid ADIF band          | memory  |                                                                 |
+| Mode         | valid ADIF mode          | memory  |                                                                 | 
+| RST rcvd     | .599                     | auto    | default CW 599, phone 59                                        |
+| RST sent     | ,599                     | auto    | default CW 599, phone 59                                        |
+| QSL rcvd     | *                        |         | toggles the information                                         |
+| Event ID     | $xxxxxx                  | memory  | Contest ID or one of POTA, SOTA                                 |
+| Rcvd Exch    | %xxxxx                   |         | Contest exchange or xOTA reference                              |
+| Time         | HHMMt                    | memory  | partly time will be filled                                      |
+| Date         | YYYYMMDDd                | memory  | partly date will be filled                                      |
+| Date/Time    | =                        | auto    | sync date/time to now                                           |
+| Frequency    | 99999f                   |         | in kHz                                                          |
+| TX Power     | 99p                      |         | in W                                                            | 
+| Your Call    | -cxx9xx                  | memory  |                                                                 | 
+| Your Locator | -lxx99xx                 | memory  |                                                                 | 
+| Your Name    | -nxxxx                   | memory  | _ for spaces                                                    |
+| Finish QSO   | linefeed                 | command | ENTER-Key                                                       |
+| Clear QSO    | ~                        | command | clears input not cached QSO                                     |
+| Show QSO     | ?                        | command |                                                                 |
+| Sent Exch    | -N9 or -Nxx              | auto    | set start value (if number) for contest QSO No. or own xOTA ref |
+| Show version | -V                       | command |                                                                 |
 
 For callsigns, mode, locators, RST and contest id lowercase will be converted to uppecase.
 
@@ -182,7 +182,7 @@ HamCC adds two shortcuts for modes
 * `m` for MFSK (which also works via `d`)
 * `dv` for DIGITALVOICE
 
-### Event mode for contests
+### Event mode for contests and xOTA
 If you typed in a contest id HamCC starts to increase a QSO contest exchange (see `-N`)
 which you may want to communicate to your QSO partners. If the exchange is not a number it is simply carried as text.
 The exchange is stored in STX and STX_STRING if it is a number. Else it is only stored in STX_STRING. 
@@ -197,6 +197,10 @@ The received contest data will simply be stored without further handling.
 If it is a number it is stored as SRX and SRX_STRING. Else it is stored as SRX_STRING only.
 
 To leave the event mode for the following QSOs type a single `$` followed by a SPACE.
+
+#### xOTA
+For xOTA just enter one of SOTA, POTA i.e. `$pota` instead of the contest ID. 
+Then set your own xOTA reference with `-Nxx-999` and track the QSO partners reference with `%xx-999`.
 
 Source Code
 -----------
