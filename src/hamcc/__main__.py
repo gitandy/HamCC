@@ -46,10 +46,13 @@ def qso2str(qso, pos, cnt) -> tuple[str, str]:
             else:
                 opt_info += f'| {i} {val} '
 
-    cntst_info = ''
+    event_info = ''
     if 'CONTEST_ID' in qso and qso["CONTEST_ID"]:
-        cntst_info = (f'[ $ {qso["CONTEST_ID"]} | -N {qso.get("STX", qso["STX_STRING"])} | '
+        event_info = (f'[ $ {qso["CONTEST_ID"]} | -N {qso.get("STX", qso["STX_STRING"])} | '
                       f'% {qso.get("SRX", qso.get("SRX_STRING", ""))} ]')
+    #elif xOTA
+        # event_info = (f'[ $ {qso["CONTEST_ID"]} | -N {qso.get("STX", qso["STX_STRING"])} | '
+        #           f'% {qso.get("SRX", qso.get("SRX_STRING", ""))} ]')
 
     loc = ''
     if 'GRIDSQUARE' in qso:
@@ -60,7 +63,7 @@ def qso2str(qso, pos, cnt) -> tuple[str, str]:
         my_loc = f'{qso["MY_CITY"]} ({qso["MY_GRIDSQUARE"]})' if 'MY_CITY' in qso else qso["MY_GRIDSQUARE"]
 
     line1 = (f'[ {"*" if pos == -1 else pos + 1}/{"-" if cnt == 0 else cnt} ] '
-             f'[ -c {qso["STATION_CALLSIGN"]} | -l {my_loc} | -n {qso.get("MY_NAME", "")} ] {cntst_info}')
+             f'[ -c {qso["STATION_CALLSIGN"]} | -l {my_loc} | -n {qso.get("MY_NAME", "")} ] {event_info}')
     line2 = (f'[ {d} d | {t} t | B {qso["BAND"]} | '
              f'M {qso["MODE"]} | C {qso["CALL"]} | @ {loc} {opt_info}]')
 
@@ -245,10 +248,10 @@ def main():
                         help='your locator and QTH i.e. "JO30uj" or "Eitelborn(JO30uj)"')
     parser.add_argument('-n', '--name', dest='own_name', default='',
                         help='your name')
-    parser.add_argument('-C', '--contest', dest='contest_id', default='',
-                        help='the contest ID to activate at startup')
-    parser.add_argument('-N', '--qso-number', dest='qso_number', type=int, default=1,
-                        help='the first QSO number to use if a contest is activated')
+    parser.add_argument('-E', '--event', dest='event', default='',
+                        help='the event (contest ID) to activate at startup')
+    parser.add_argument('-N', '--exchange', dest='exchange', default=1,
+                        help='the first QSO number to use if a contest is activated or a textual exchange')
     parser.add_argument('-L', '--load-qsos', dest='load_qsos', action='store_true',
                         help='load stored QSOs to edit them (creates backup and opens a new file)')
     parser.add_argument('-x', '--overwrite', dest='overwrite', action='store_true',
@@ -278,7 +281,7 @@ def main():
             records = doc['RECORDS']
 
     wrapper(command_console, args.file, args.own_call, args.own_loc, args.own_name,
-            not args.overwrite, args.contest_id, args.qso_number, records)
+            not args.overwrite, args.event, args.exchange, records)
 
     logger.info('Stopped')
 

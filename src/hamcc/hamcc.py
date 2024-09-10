@@ -92,7 +92,7 @@ class CassiopeiaConsole:
     REGEX_QTH = re.compile(r'(.*?)? *\(([a-rA-R]{2}[0-9]{2}([a-xA-X]{2}([0-9]{2})?)?)\)')
 
     def __init__(self, my_call: str = '', my_loc: str = '', my_name: str = '',
-                 contest_id: str = '', qso_number: int = 1,
+                 event: str = '', event_ref: int = 1,
                  init_qso: dict[str, str] = None, init_worked: dict[str, tuple[str, str]] = None):
         logger.debug('Initialising...')
         if my_call and not self.check_format(self.REGEX_CALL, my_call):
@@ -131,11 +131,11 @@ class CassiopeiaConsole:
         self.__pwr__ = init_qso.get('TX_PWR', '')
 
         # Special
-        self.__contest_id__ = contest_id
+        self.__event__ = event
         try:
-            self.__cntstqso_id__ = int(qso_number) if self.__contest_id__ else 0
+            self.__event_ref__ = int(event_ref) if self.__event__ else 0
         except ValueError:
-            self.__cntstqso_id__ = qso_number
+            self.__event_ref__ = event_ref
         self.__worked_calls__: dict[str, tuple[str, str]] = init_worked if type(init_worked) is dict else {}
 
         self.__edit_pos__ = -1
@@ -236,14 +236,17 @@ class CassiopeiaConsole:
         if self.__freq__:
             self.__cur_qso__['FREQ'] = self.__freq__
 
-        if self.__contest_id__:
-            self.__cur_qso__['CONTEST_ID'] = self.__contest_id__
-            if type(self.__cntstqso_id__) is int:
-                self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
-                self.__cur_qso__['STX_STRING'] = f'{self.__cntstqso_id__:03d}'
-            else:
-                self.__cur_qso__.pop('STX', '')
-                self.__cur_qso__['STX_STRING'] = self.__cntstqso_id__
+        if self.__event__:
+            self.clear_event()
+
+    def clear_event(self):
+        self.__cur_qso__['CONTEST_ID'] = self.__event__
+        if type(self.__event_ref__) is int:
+            self.__cur_qso__['STX'] = f'{self.__event_ref__:03d}'
+            self.__cur_qso__['STX_STRING'] = f'{self.__event_ref__:03d}'
+        else:
+            self.__cur_qso__.pop('STX', '')
+            self.__cur_qso__['STX_STRING'] = self.__event_ref__
 
     def reset(self):
         """Reset whole session"""
@@ -261,8 +264,8 @@ class CassiopeiaConsole:
         self.__pwr__ = ''
 
         # Special
-        self.__contest_id__ = ''
-        self.__cntstqso_id__: int | str = 0
+        self.__event__ = ''
+        self.__event_ref__: int | str = 0
         self.__worked_calls__ = []
 
         self.clear()
@@ -312,15 +315,18 @@ class CassiopeiaConsole:
 
             self.clear()
 
-            if self.__contest_id__:
-                if type(self.__cntstqso_id__) is int:
-                    self.__cntstqso_id__ += 1
-                    self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
-                    self.__cur_qso__['STX_STRING'] = f'{self.__cntstqso_id__:03d}'
-                else:
-                    self.__cur_qso__['STX_STRING'] = self.__cntstqso_id__
+            if self.__event__:
+                self.finalize_event()
 
         return res
+
+    def finalize_event(self):
+        if type(self.__event_ref__) is int:
+            self.__event_ref__ += 1
+            self.__cur_qso__['STX'] = f'{self.__event_ref__:03d}'
+            self.__cur_qso__['STX_STRING'] = f'{self.__event_ref__:03d}'
+        else:
+            self.__cur_qso__['STX_STRING'] = self.__event_ref__
 
     @property
     def qsos(self) -> list[dict]:
@@ -432,23 +438,23 @@ class CassiopeiaConsole:
             return 'Error: Unknown number format'
         return ''
 
-    def evaluate_contest(self, seq: str) -> str:
+    def evaluate_event(self, seq: str) -> str:
         if len(seq) > 1:
-            self.__cntstqso_id__ = 1
-            self.__contest_id__ = seq[1:].upper()
-            self.__cur_qso__['CONTEST_ID'] = self.__contest_id__
+            self.__event_ref__ = 1
+            self.__event__ = seq[1:].upper()
+            self.__cur_qso__['CONTEST_ID'] = self.__event__
             self.__cur_qso__['STX'] = '001'
             self.__cur_qso__['STX_STRING'] = '001'
             self.__cur_qso__['SRX_STRING'] = ''
         else:
-            self.__contest_id__ = ''
+            self.__event__ = ''
             if 'CONTEST_ID' in self.__cur_qso__:
                 self.__cur_qso__.pop('CONTEST_ID')
                 self.__cur_qso__.pop('STX', '')
                 self.__cur_qso__.pop('STX_STRING', '')
                 self.__cur_qso__.pop('SRX', '')
                 self.__cur_qso__.pop('SRX_STRING', '')
-            self.__cntstqso_id__ = 0
+            self.__event_ref__ = 0
         return ''
 
     def evaluate_extended(self, seq: str) -> str:
@@ -475,17 +481,10 @@ class CassiopeiaConsole:
             self.__my_name__ = seq[2:].replace('_', ' ')
             self.__cur_qso__['MY_NAME'] = self.__my_name__
         elif seq.startswith('-N'):  # Start contest qso ID
-            if self.__contest_id__:
-                try:
-                    self.__cntstqso_id__ = int(seq[2:])
-                    self.__cur_qso__['STX'] = f'{self.__cntstqso_id__:03d}'
-                    self.__cur_qso__['STX_STRING'] = f'{self.__cntstqso_id__:03d}'
-                except ValueError:
-                    self.__cntstqso_id__ = seq[2:].upper()
-                    self.__cur_qso__.pop('STX')
-                    self.__cur_qso__['STX_STRING'] = self.__cntstqso_id__
+            if self.__event__:
+                self.evaluate_own_event_ref(seq)
             else:
-                return 'Error: No active contest'
+                return 'Error: No active event'
         elif seq == '-V':
             return f'{__proj_name__}: {__version_str__}'
         else:
@@ -530,16 +529,12 @@ class CassiopeiaConsole:
                     qth, loc = self.check_qth(seq[1:])
                     self.__cur_qso__['GRIDSQUARE'] = loc
                     self.__cur_qso__['QTH'] = qth
-            elif seq.startswith('$'):  # Contest ID
-                return self.evaluate_contest(seq)
-            elif seq.startswith('%'):  # Contest received QSO id
-                if not self.__contest_id__:
-                    return 'Error: No active contest'
-                try:
-                    self.__cur_qso__['SRX'] = str(int(seq[1:]))
-                except ValueError:
-                    pass
-                self.__cur_qso__['SRX_STRING'] = seq[1:].upper()
+            elif seq.startswith('$'):  # Event
+                return self.evaluate_event(seq)
+            elif seq.startswith('%'):  # Event QSO ref
+                if not self.__event__:
+                    return 'Error: No active event'
+                self.evaluate_event_ref(seq)
             elif seq[0] in '.,':  # RST
                 if not self.check_format(self.REGEX_RSTFIELD, seq[1:]):
                     return 'Error: Wrong RST format'
@@ -568,3 +563,20 @@ class CassiopeiaConsole:
                             f'at {adif_time2iso(self.__worked_calls__[seq.upper()][1])}')
 
         return ''
+
+    def evaluate_event_ref(self, seq):
+        try:
+            self.__cur_qso__['SRX'] = str(int(seq[1:]))
+        except ValueError:
+            pass
+        self.__cur_qso__['SRX_STRING'] = seq[1:].upper()
+
+    def evaluate_own_event_ref(self, seq):
+        try:
+            self.__event_ref__ = int(seq[2:])
+            self.__cur_qso__['STX'] = f'{self.__event_ref__:03d}'
+            self.__cur_qso__['STX_STRING'] = f'{self.__event_ref__:03d}'
+        except ValueError:
+            self.__event_ref__ = seq[2:].upper()
+            self.__cur_qso__.pop('STX')
+            self.__cur_qso__['STX_STRING'] = self.__event_ref__

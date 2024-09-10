@@ -16,7 +16,7 @@ but can also be used as standalone console logger.
 ### Functions
 - call with format check
 - locator/QTH with format check
-- contest mode
+- event mode for contests
 - worked before detection
 - storing QSO in ADIF ADI format
 - automatic date and time
@@ -127,32 +127,32 @@ The table shows all available pre- and postfixes. The following will work for AP
 Placeholder x for characters and 9 for numbers.
 Types marked with auto are prefilled but can be overwritten. Types marked with memory are retained for the session.
 
-| Info         | Format                   | Type    | Comments                                       |
-|--------------|--------------------------|---------|------------------------------------------------|
-| Callsign     | xx9xx                    |         | format checked                                 |
-| Locator/QTH  | @xx99xx or @QTH(Locator) |         | format checked                                 |
-| Name         | 'xxxx                    |         | _ for spaces                                   |
-| Comment      | #xxxx                    |         | _ for spaces                                   |
-| Band         | valid ADIF band          | memory  |                                                |
-| Mode         | valid ADIF mode          | memory  |                                                | 
-| RST rcvd     | .599                     | auto    | default CW 599, phone 59                       |
-| RST sent     | ,599                     | auto    | default CW 599, phone 59                       |
-| QSL rcvd     | *                        |         | toggles the information                        |
-| Contest ID   | $xxxxxx                  | memory  |                                                |
-| Rcvd QSO ID  | %xxxxx                   |         |                                                |
-| Time         | HHMMt                    | memory  | partly time will be filled                     |
-| Date         | YYYYMMDDd                | memory  | partly date will be filled                     |
-| Date/Time    | =                        | auto    | sync date/time to now                          |
-| Frequency    | 99999f                   |         | in kHz                                         |
-| TX Power     | 99p                      |         | in W                                           | 
-| Your Call    | -cxx9xx                  | memory  |                                                | 
-| Your Locator | -lxx99xx                 | memory  |                                                | 
-| Your Name    | -nxxxx                   | memory  | _ for spaces                                   |
-| Finish QSO   | linefeed                 | command | ENTER-Key                                      |
-| Clear QSO    | ~                        | command | clears input not cached QSO                    |
-| Show QSO     | ?                        | command |                                                |
-| Set QSO No   | -N9 or -Nxx              | auto    | set start value (if number) for contest QSO No |
-| Show version | -V                       | command |                                                |
+| Info         | Format                   | Type    | Comments                                        |
+|--------------|--------------------------|---------|-------------------------------------------------|
+| Callsign     | xx9xx                    |         | format checked                                  |
+| Locator/QTH  | @xx99xx or @QTH(Locator) |         | format checked                                  |
+| Name         | 'xxxx                    |         | _ for spaces                                    |
+| Comment      | #xxxx                    |         | _ for spaces                                    |
+| Band         | valid ADIF band          | memory  |                                                 |
+| Mode         | valid ADIF mode          | memory  |                                                 | 
+| RST rcvd     | .599                     | auto    | default CW 599, phone 59                        |
+| RST sent     | ,599                     | auto    | default CW 599, phone 59                        |
+| QSL rcvd     | *                        |         | toggles the information                         |
+| Event ID     | $xxxxxx                  | memory  | Contest ID                                      |
+| Rcvd Exch    | %xxxxx                   |         | Contest exchange                                |
+| Time         | HHMMt                    | memory  | partly time will be filled                      |
+| Date         | YYYYMMDDd                | memory  | partly date will be filled                      |
+| Date/Time    | =                        | auto    | sync date/time to now                           |
+| Frequency    | 99999f                   |         | in kHz                                          |
+| TX Power     | 99p                      |         | in W                                            | 
+| Your Call    | -cxx9xx                  | memory  |                                                 | 
+| Your Locator | -lxx99xx                 | memory  |                                                 | 
+| Your Name    | -nxxxx                   | memory  | _ for spaces                                    |
+| Finish QSO   | linefeed                 | command | ENTER-Key                                       |
+| Clear QSO    | ~                        | command | clears input not cached QSO                     |
+| Show QSO     | ?                        | command |                                                 |
+| Sent Exch    | -N9 or -Nxx              | auto    | set start value (if number) for contest QSO No. |
+| Show version | -V                       | command |                                                 |
 
 For callsigns, mode, locators, RST and contest id lowercase will be converted to uppecase.
 
@@ -182,21 +182,21 @@ HamCC adds two shortcuts for modes
 * `m` for MFSK (which also works via `d`)
 * `dv` for DIGITALVOICE
 
-### Contests
+### Event mode for contests
 If you typed in a contest id HamCC starts to increase a QSO contest exchange (see `-N`)
 which you may want to communicate to your QSO partners. If the exchange is not a number it is simply carried as text.
 The exchange is stored in STX and STX_STRING if it is a number. Else it is only stored in STX_STRING. 
 
 Changing the contest id resets the QSO counter.
 
-    [ */- ] [ -c XX1XXX | -l JN20uu | -n Paul ] 
-    [ d 2024-08-20 | t 13:06 | B 10m | M SSB | C  | @  | $ ARRL-10 | -N 1 | % 007 | . 59 | , 59 ]
+    [ */- ] [ -c XX1XXX | -l JN20uu | -n Paul ] [ $ ARRL-10 | -N 001 | % 007 ]
+    [ d 2024-08-20 | t 13:06 | B 10m | M SSB | C  | @  | . 59 | , 59 ]
     QSO> $ARRL-10 %007 _
 
 The received contest data will simply be stored without further handling. 
 If it is a number it is stored as SRX and SRX_STRING. Else it is stored as SRX_STRING only.
 
-To leave the contest mode for the following QSOs type a single `$` followed by a SPACE.
+To leave the event mode for the following QSOs type a single `$` followed by a SPACE.
 
 Source Code
 -----------

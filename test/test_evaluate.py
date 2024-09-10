@@ -117,10 +117,6 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('Error: Wrong QTH/maidenhead format', self.cc.evaluate('@TestAA22aa)'))
         self.assertEqual('AA11aa', self.cc.current_qso['GRIDSQUARE'])
 
-    @unittest.expectedFailure
-    def test_070_contest(self):
-        self.fail('Test missing')
-
     def test_090_rst(self):
         self.assertEqual('', self.cc.evaluate('.44'))
         self.assertEqual('', self.cc.evaluate(',55'))
