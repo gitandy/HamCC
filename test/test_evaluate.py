@@ -128,6 +128,13 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('Error: Wrong RST format', self.cc.evaluate(',75'))
         self.assertEqual('55', self.cc.current_qso['RST_SENT'])
 
+        self.assertEqual('', self.cc.evaluate('.111'))
+        self.assertEqual('', self.cc.evaluate('.599'))
+        self.assertEqual('', self.cc.evaluate('.599a'))
+        self.assertEqual('Error: Wrong RST format', self.cc.evaluate('.59a'))
+        self.assertEqual('Error: Wrong RST format', self.cc.evaluate('.500'))
+        self.assertEqual('Error: Wrong RST format', self.cc.evaluate('.449t'))
+
     def test_100_qsl(self):
         self.assertNotIn('QSL_RCVD', self.cc.current_qso)
 
