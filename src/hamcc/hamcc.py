@@ -491,7 +491,7 @@ class CassiopeiaConsole:
         if seq.startswith('-c'):
             if not self.check_format(self.REGEX_CALL, seq[2:]):
                 return 'Error: Wrong call format'
-            self.__my_call__ = seq[2:]
+            self.__my_call__ = seq[2:].upper()
             self.__cur_qso__['STATION_CALLSIGN'] = self.__my_call__
         elif seq.startswith('-l'):
             if (not self.check_format(self.REGEX_LOCATOR, seq[2:]) and not

@@ -113,10 +113,11 @@ def command_console(stdscr: window, file, own_call, own_loc, own_name, append=Fa
             last_qso = records[-1]
 
         cc = CassiopeiaConsole(own_call, own_loc, own_name, contest_id, qso_number, last_qso, worked_calls)
-        logger.info('Loading QSOs (if available)...')
-        for r in records:
-            cc.append_qso(r)
-        logger.info(f'...done {len(cc.qsos)} QSOs')
+        if records:
+            logger.info('Loading QSOs...')
+            for r in records:
+                cc.append_qso(r)
+            logger.info(f'...done {len(cc.qsos)} QSOs')
 
         # Clear screen
         stdscr.clear()
