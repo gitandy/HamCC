@@ -521,74 +521,88 @@ class CassiopeiaConsole:
             return 'Error: Unknown prefix'
         return ''
 
-    def evaluate(self, seq: str) -> str:  # noqa: C901
-        if seq:
-            self.__qso_active__ = True
+    def evaluate_locator(self, seq: str) -> str:
+        if not self.check_format(self.REGEX_LOCATOR, seq) and not self.check_qth(seq):
+            return 'Error: Wrong QTH/maidenhead format'
+        if self.check_format(self.REGEX_LOCATOR, seq):
+            self.__cur_qso__['GRIDSQUARE'] = seq[:2].upper() + seq[2:]
+            if 'QTH' in self.__cur_qso__:
+                self.__cur_qso__.pop('QTH')
+        else:
+            qth, loc = self.check_qth(seq)
+            self.__cur_qso__['GRIDSQUARE'] = loc[:2].upper() + loc[2:]
+            self.__cur_qso__['QTH'] = qth.replace('_', ' ')
+        return ''
 
-            if seq.lower().endswith('m') and seq.lower() in BANDS:
-                self.__band__ = seq.lower()
+    def evaluate_rst(self, seq: str) -> str:
+        if not self.check_format(self.REGEX_RSTFIELD, seq[1:]):
+            return 'Error: Wrong RST format'
+        if seq[0] == '.':
+            self.__cur_qso__['RST_RCVD'] = seq[1:].upper()
+        else:
+            self.__cur_qso__['RST_SENT'] = seq[1:].upper()
+        return ''
+
+    def evaluate_call(self, seq: str) -> str:
+        self.__cur_qso__['CALL'] = seq.upper()
+        if not self.check_format(self.REGEX_CALL, seq):
+            return 'Warning: Wrong call format'
+        if seq.upper() in self.__worked_calls__:
+            return (f'{seq.upper()} worked on {adif_date2iso(self.__worked_calls__[seq.upper()][0])} '
+                    f'at {adif_time2iso(self.__worked_calls__[seq.upper()][1])}')
+        return ''
+
+    def evaluate(self, seq: str) -> str:
+        if not seq:
+            return ''
+
+        self.__qso_active__ = True
+
+        if seq.lower().endswith('m') and seq.lower() in BANDS:
+            self.__band__ = seq.lower()
+            self.__cur_qso__['BAND'] = self.__band__
+        elif self.isnumeric(seq) and 0 < len(seq) < 3:
+            if seq in self.BANDS_HOSTI:
+                self.__band__ = self.BANDS_HOSTI[seq.lower()]
                 self.__cur_qso__['BAND'] = self.__band__
-            elif self.isnumeric(seq) and 0 < len(seq) < 3:
-                if seq in self.BANDS_HOSTI:
-                    self.__band__ = self.BANDS_HOSTI[seq.lower()]
-                    self.__cur_qso__['BAND'] = self.__band__
-            elif self.isdecimal(seq[:-1]):
-                return self.evaluate_numeric(seq)
-            elif seq.upper() in MODES:
-                self.__mode__ = seq.upper()
-                self.__cur_qso__['MODE'] = self.__mode__
-                self.set_rst_default(self.__mode__)
-            elif seq.upper() in self.MODES_HOSTI:
-                self.__mode__ = self.MODES_HOSTI[seq.upper()]
-                self.__cur_qso__['MODE'] = self.__mode__
-                self.set_rst_default(self.__mode__)
-            elif seq.startswith('#'):  # Comment
-                self.__cur_qso__['COMMENT'] = seq[1:].replace('_', ' ')
-            elif seq.startswith('\''):  # Name
-                self.__cur_qso__['NAME'] = seq[1:].replace('_', ' ')
-            elif seq.startswith('@'):  # Locator
-                if not self.check_format(self.REGEX_LOCATOR, seq[1:]) and not self.check_qth(seq[1:]):
-                    return 'Error: Wrong QTH/maidenhead format'
-                if self.check_format(self.REGEX_LOCATOR, seq[1:]):
-                    self.__cur_qso__['GRIDSQUARE'] = seq[1:3].upper() + seq[3:]
-                    if 'QTH' in self.__cur_qso__:
-                        self.__cur_qso__.pop('QTH')
-                else:
-                    qth, loc = self.check_qth(seq[1:])
-                    self.__cur_qso__['GRIDSQUARE'] = loc
-                    self.__cur_qso__['QTH'] = qth
-            elif seq.startswith('$'):  # Event
-                return self.evaluate_event(seq[1:].upper())
-            elif seq.startswith('%'):  # Event QSO ref
-                if not self.__event__:
-                    return 'Error: No active event'
-                self.evaluate_event_ref(seq)
-            elif seq[0] in '.,':  # RST
-                if not self.check_format(self.REGEX_RSTFIELD, seq[1:]):
-                    return 'Error: Wrong RST format'
-                if seq[0] == '.':
-                    self.__cur_qso__['RST_RCVD'] = seq[1:].upper()
-                else:
-                    self.__cur_qso__['RST_SENT'] = seq[1:].upper()
-            elif seq == '*':  # Toggle QSL received
-                if 'QSL_RCVD' in self.__cur_qso__ and self.__cur_qso__['QSL_RCVD'] == 'Y':
-                    self.__cur_qso__['QSL_RCVD'] = 'N'
-                else:
-                    self.__cur_qso__['QSL_RCVD'] = 'Y'
-            elif seq == '=':  # Sync date/time to now
-                self.__date__ = datetime.datetime.utcnow().strftime('%Y%m%d')
-                self.__time__ = datetime.datetime.utcnow().strftime('%H%M')
-                self.__cur_qso__['QSO_DATE'] = self.__date__
-                self.__cur_qso__['TIME_ON'] = self.__time__
-            elif seq[0] == '-':  # different extended infos and commands
-                return self.evaluate_extended(seq)
-            else:  # Assume a callsign
-                self.__cur_qso__['CALL'] = seq.upper()
-                if not self.check_format(self.REGEX_CALL, seq):
-                    return 'Warning: Wrong call format'
-                if seq.upper() in self.__worked_calls__:
-                    return (f'{seq.upper()} worked on {adif_date2iso(self.__worked_calls__[seq.upper()][0])} '
-                            f'at {adif_time2iso(self.__worked_calls__[seq.upper()][1])}')
+        elif self.isdecimal(seq[:-1]):
+            return self.evaluate_numeric(seq)
+        elif seq.upper() in MODES:
+            self.__mode__ = seq.upper()
+            self.__cur_qso__['MODE'] = self.__mode__
+            self.set_rst_default(self.__mode__)
+        elif seq.upper() in self.MODES_HOSTI:
+            self.__mode__ = self.MODES_HOSTI[seq.upper()]
+            self.__cur_qso__['MODE'] = self.__mode__
+            self.set_rst_default(self.__mode__)
+        elif seq.startswith('#'):  # Comment
+            self.__cur_qso__['COMMENT'] = seq[1:].replace('_', ' ')
+        elif seq.startswith('\''):  # Name
+            self.__cur_qso__['NAME'] = seq[1:].replace('_', ' ')
+        elif seq.startswith('@'):  # Locator
+            return self.evaluate_locator(seq[1:])
+        elif seq.startswith('$'):  # Event
+            return self.evaluate_event(seq[1:].upper())
+        elif seq.startswith('%'):  # Event QSO ref
+            if not self.__event__:
+                return 'Error: No active event'
+            self.evaluate_event_ref(seq)
+        elif seq[0] in '.,':  # RST
+            return self.evaluate_rst(seq)
+        elif seq == '*':  # Toggle QSL received
+            if 'QSL_RCVD' in self.__cur_qso__ and self.__cur_qso__['QSL_RCVD'] == 'Y':
+                self.__cur_qso__['QSL_RCVD'] = 'N'
+            else:
+                self.__cur_qso__['QSL_RCVD'] = 'Y'
+        elif seq == '=':  # Sync date/time to now
+            self.__date__ = datetime.datetime.utcnow().strftime('%Y%m%d')
+            self.__time__ = datetime.datetime.utcnow().strftime('%H%M')
+            self.__cur_qso__['QSO_DATE'] = self.__date__
+            self.__cur_qso__['TIME_ON'] = self.__time__
+        elif seq[0] == '-':  # different extended infos and commands
+            return self.evaluate_extended(seq)
+        else:  # Assume a callsign
+            return self.evaluate_call(seq)
 
         return ''
 
