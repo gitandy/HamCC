@@ -504,6 +504,7 @@ class CassiopeiaConsole:
                     self.__my_qth__ = ''
             else:
                 self.__my_qth__, self.__my_loc__ = self.check_qth(seq[2:])
+                self.__my_qth__.replace('_', ' ')
                 self.__cur_qso__['MY_GRIDSQUARE'] = self.__my_loc__
                 self.__cur_qso__['MY_CITY'] = self.__my_qth__
         elif seq.startswith('-n'):
