@@ -248,8 +248,8 @@ class CassiopeiaConsole:
 
     def clear_event(self):
         if self.is_sig():
-            self.__cur_qso__[f'MY_SIG'] = self.__event__
-            self.__cur_qso__[f'MY_SIG_INFO'] = self.__event_ref__
+            self.__cur_qso__['MY_SIG'] = self.__event__
+            self.__cur_qso__['MY_SIG_INFO'] = self.__event_ref__
             # self.__cur_qso__[f'MY_{self.__event__}_REF'] = self.__event_ref__  # unused?
         else:
             self.__cur_qso__['CONTEST_ID'] = self.__event__
@@ -316,7 +316,7 @@ class CassiopeiaConsole:
             if qso["CALL"]:
                 res = f'Last QSO cached: {qso["CALL"]}'
             else:
-                res = f'Warning: Callsign missing for last QSO'
+                res = 'Warning: Callsign missing for last QSO'
 
             if self.__edit_pos__ == -1:
                 self.__qsos__.append(qso)
@@ -456,8 +456,8 @@ class CassiopeiaConsole:
             self.__event__ = seq
             if self.is_sig():
                 self.__event_ref__ = ''
-                self.__cur_qso__[f'MY_SIG'] = self.__event__
-                self.__cur_qso__[f'MY_SIG_INFO'] = self.__event_ref__
+                self.__cur_qso__['MY_SIG'] = self.__event__
+                self.__cur_qso__['MY_SIG_INFO'] = self.__event_ref__
                 # self.__cur_qso__[f'MY_{self.__event__}_REF'] = self.__event_ref__  # unused?
             else:
                 self.__event_ref__ = 1
@@ -494,8 +494,7 @@ class CassiopeiaConsole:
             self.__my_call__ = seq[2:].upper()
             self.__cur_qso__['STATION_CALLSIGN'] = self.__my_call__
         elif seq.startswith('-l'):
-            if (not self.check_format(self.REGEX_LOCATOR, seq[2:]) and not
-            self.check_qth(seq[2:])):
+            if not self.check_format(self.REGEX_LOCATOR, seq[2:]) and not self.check_qth(seq[2:]):
                 return 'Error: Wrong QTH/maidenhead format'
             if self.check_format(self.REGEX_LOCATOR, seq[2:]):
                 self.__my_loc__ = seq[2:4].upper() + seq[4:]
@@ -521,8 +520,7 @@ class CassiopeiaConsole:
             return 'Error: Unknown prefix'
         return ''
 
-    # flake8: noqa: C901
-    def evaluate(self, seq: str) -> str:
+    def evaluate(self, seq: str) -> str:  # noqa: C901
         if seq:
             self.__qso_active__ = True
 
@@ -548,8 +546,7 @@ class CassiopeiaConsole:
             elif seq.startswith('\''):  # Name
                 self.__cur_qso__['NAME'] = seq[1:].replace('_', ' ')
             elif seq.startswith('@'):  # Locator
-                if (not self.check_format(self.REGEX_LOCATOR, seq[1:]) and not
-                self.check_qth(seq[1:])):
+                if not self.check_format(self.REGEX_LOCATOR, seq[1:]) and not self.check_qth(seq[1:]):
                     return 'Error: Wrong QTH/maidenhead format'
                 if self.check_format(self.REGEX_LOCATOR, seq[1:]):
                     self.__cur_qso__['GRIDSQUARE'] = seq[1:3].upper() + seq[3:]
@@ -596,8 +593,8 @@ class CassiopeiaConsole:
 
     def evaluate_event_ref(self, seq):
         if self.is_sig():
-            self.__cur_qso__[f'SIG'] = self.__event__
-            self.__cur_qso__[f'SIG_INFO'] = seq[1:].upper()
+            self.__cur_qso__['SIG'] = self.__event__
+            self.__cur_qso__['SIG_INFO'] = seq[1:].upper()
             # self.__cur_qso__[f'{self.__event__}_REF'] = seq[1:].upper()  # unused?
         else:
             try:
@@ -609,8 +606,8 @@ class CassiopeiaConsole:
     def evaluate_own_event_ref(self, seq):
         if self.is_sig():
             self.__event_ref__ = seq[2:].upper()
-            self.__cur_qso__[f'MY_SIG'] = self.__event__
-            self.__cur_qso__[f'MY_SIG_INFO'] = self.__event_ref__
+            self.__cur_qso__['MY_SIG'] = self.__event__
+            self.__cur_qso__['MY_SIG_INFO'] = self.__event_ref__
             # self.__cur_qso__[f'MY_{self.__event__}_REF'] = self.__event_ref__  # unused?
         else:
             try:
