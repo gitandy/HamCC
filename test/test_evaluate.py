@@ -199,11 +199,10 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('', self.cc.evaluate('AA1AAA'))
         self.assertEqual('AA1AAA', self.cc.current_qso['CALL'])
 
-        self.assertEqual('Error: Wrong call format', self.cc.evaluate('AA1AAA1'))
-        self.assertEqual('AA1AAA', self.cc.current_qso['CALL'])
+        self.assertEqual('Warning: Wrong call format', self.cc.evaluate('AA1AAA1'))
+        self.assertEqual('AA1AAA1', self.cc.current_qso['CALL'])
 
-        self.assertEqual('Last QSO cached: AA1AAA', self.cc.finalize_qso())
-        self.assertIn('AA1AAA worked on', self.cc.evaluate('AA1AAA'))
+        self.assertEqual('Last QSO cached: AA1AAA1', self.cc.finalize_qso())
 
 
 if __name__ == '__main__':

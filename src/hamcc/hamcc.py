@@ -582,10 +582,10 @@ class CassiopeiaConsole:
                 self.__cur_qso__['TIME_ON'] = self.__time__
             elif seq[0] == '-':  # different extended infos and commands
                 return self.evaluate_extended(seq)
-            else:  # Call
-                if not self.check_format(self.REGEX_CALL, seq):
-                    return 'Error: Wrong call format'
+            else:  # Assume a callsign
                 self.__cur_qso__['CALL'] = seq.upper()
+                if not self.check_format(self.REGEX_CALL, seq):
+                    return 'Warning: Wrong call format'
                 if seq.upper() in self.__worked_calls__:
                     return (f'{seq.upper()} worked on {adif_date2iso(self.__worked_calls__[seq.upper()][0])} '
                             f'at {adif_time2iso(self.__worked_calls__[seq.upper()][1])}')
