@@ -107,6 +107,9 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('', self.cc.evaluate('@Test(AA11aa)'))
         self.assertEqual('AA11aa', self.cc.current_qso['GRIDSQUARE'])
         self.assertEqual('Test', self.cc.current_qso['QTH'])
+        self.assertEqual('', self.cc.evaluate('@Test_Teste(AA22aa)'))
+        self.assertEqual('AA22aa', self.cc.current_qso['GRIDSQUARE'])
+        self.assertEqual('Test Teste', self.cc.current_qso['QTH'])
 
         self.assertEqual('', self.cc.evaluate('@AA11aa'))
         self.assertEqual('AA11aa', self.cc.current_qso['GRIDSQUARE'])
@@ -172,6 +175,9 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('', self.cc.evaluate('-lCheck(BB22bb)'))
         self.assertEqual('BB22bb', self.cc.current_qso['MY_GRIDSQUARE'])
         self.assertEqual('Check', self.cc.current_qso['MY_CITY'])
+        self.assertEqual('', self.cc.evaluate('-lCheck_Checker(BB33bb)'))
+        self.assertEqual('BB33bb', self.cc.current_qso['MY_GRIDSQUARE'])
+        self.assertEqual('Check Checker', self.cc.current_qso['MY_CITY'])
 
         self.assertEqual('', self.cc.evaluate('-lBB22bb'))
         self.assertEqual('BB22bb', self.cc.current_qso['MY_GRIDSQUARE'])
