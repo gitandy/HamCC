@@ -63,8 +63,8 @@ def qso2str(qso, pos, cnt) -> tuple[str, str]:
 
     line1 = (f'[ {"*" if pos == -1 else pos + 1}/{"-" if cnt == 0 else cnt} ] '
              f'[ -c {qso["STATION_CALLSIGN"]} | -l {my_loc} | -n {qso.get("MY_NAME", "")} ] {event_info}')
-    line2 = (f'[ {d} d | {t} t | B {qso["BAND"]} | '
-             f'M {qso["MODE"]} | C {qso["CALL"]} | @ {loc} {opt_info}]')
+    line2 = (f'[ {d} d | {t} t | {qso["BAND"] if qso["BAND"] else "Band"} | {qso["MODE"] if qso["MODE"] else "Mode"} | '
+             f'{qso["CALL"] if qso["CALL"] else "Call"} | @ {loc} {opt_info}]')
 
     return line1, line2
 
