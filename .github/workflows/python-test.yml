@@ -20,8 +20,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Get git version
+      id: version
+      uses: proudust/gh-describe@v2
     - name: Build version module
-      run: make
+      run: |
+        echo "__version__ = '${{ steps.version.outputs.describe }}'" > src/hamcc/__version__.py
+        echo "__version_str__ = '${{ steps.version.outputs.describe }}'" >> src/hamcc/__version__.py
+        echo "__branch__ = ''" >> src/hamcc/__version__.py
+        echo "__unclean__ = False" >> src/hamcc/__version__.py
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
@@ -36,7 +43,7 @@ jobs:
         # stop the build if there are Python syntax errors or undefined names
         flake8 ./src --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings.
-        flake8 ./src --count --exit-zero --max-complexity=20 --max-line-length=120 --statistics
+        flake8 ./src --count --exit-zero --max-complexity=20 --ignore=E402 --max-line-length=120 --statistics
     - name: Test with pytest
       run: |
         PYTHONPATH=./src pytest 

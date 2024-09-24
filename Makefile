@@ -28,8 +28,6 @@ PYTHON = $(VENV_BIN)/python
 endif
 endif
 
-NO_OBSOLETE=
-
 all:  src/hamcc/__version__.py
 
 src/hamcc/__version__.py:
@@ -38,11 +36,9 @@ src/hamcc/__version__.py:
 	echo __branch__ = \'$(BRANCH)\' >> $@
 	echo __unclean__ = $(UNCLEAN) >> $@
 
-bdist_win: NO_OBSOLETE=-no-obsolete
 bdist_win: clean all test
 	PYTHONPATH=./src $(PYTHON) setup_win.py bdist -d dist_exe;
 
-dist: NO_OBSOLETE=-no-obsolete
 dist: clean all test
 	$(PYTHON) -m pip install --upgrade pip;
 	$(PYTHON) -m pip install --upgrade build;
