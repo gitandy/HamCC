@@ -3,8 +3,15 @@
 import os
 import sys
 import time
-from curses import wrapper, window, error
 import logging
+from platform import python_implementation
+from curses import wrapper, error
+if python_implementation() == 'PyPy':
+    # noinspection PyUnresolvedReferences,PyPep8Naming
+    from curses import Window as window
+else:
+    # noinspection PyUnresolvedReferences
+    from curses import window
 
 logger = logging.getLogger('HamCC')
 logging.basicConfig(filename='./hamcc.log', filemode='w', format='%(asctime)s %(levelname)-8s %(name)s: %(message)s',
