@@ -47,7 +47,7 @@ def qso2str(qso, pos, cnt) -> tuple[str, str]:
         if f in qso:
             val = qso[f]
             if f == 'FREQ':
-                val = str(float(val) * 1000)
+                val = f'{float(val) * 1000:0.3f}'.rstrip('0').rstrip('.')
             if f in ('FREQ', 'TX_POWER'):
                 opt_info += f'| {val} {i} '
             else:

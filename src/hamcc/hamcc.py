@@ -442,7 +442,7 @@ class CassiopeiaConsole:
             self.__time__ = t
             self.__cur_qso__['TIME_ON'] = self.__time__
         elif seq.endswith('f'):
-            self.__freq__ = str(float(seq[:-1]) / 1000)
+            self.__freq__ = f'{float(seq[:-1]) / 1000:0.6f}'.rstrip('0').rstrip('.')
             self.__cur_qso__['FREQ'] = self.__freq__
         elif seq.endswith('p'):
             self.__pwr__ = seq[:-1]
