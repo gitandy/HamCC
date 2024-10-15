@@ -26,11 +26,15 @@ class TestCaseEvaluate(unittest.TestCase):
 
         self.assertEqual('', self.cc.evaluate('12p'))
         self.assertEqual('12', self.cc.current_qso['TX_POWER'])
+        self.assertEqual('', self.cc.evaluate('0p'))
+        self.assertNotIn('TX_POWER', self.cc.current_qso)
 
         self.assertEqual('', self.cc.evaluate('14312f'))
         self.assertEqual('14.312', self.cc.current_qso['FREQ'])
         self.assertEqual('', self.cc.evaluate('145312.5f'))
         self.assertEqual('145.3125', self.cc.current_qso['FREQ'])
+        self.assertEqual('', self.cc.evaluate('0f'))
+        self.assertNotIn('FREQ', self.cc.current_qso)
 
     def test_022_numeric_time(self):
         self.assertEqual('Error: Wrong time format', self.cc.evaluate('1t'))

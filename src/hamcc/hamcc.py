@@ -442,11 +442,19 @@ class CassiopeiaConsole:
             self.__time__ = t
             self.__cur_qso__['TIME_ON'] = self.__time__
         elif seq.endswith('f'):
-            self.__freq__ = f'{float(seq[:-1]) / 1000:0.6f}'.rstrip('0').rstrip('.')
-            self.__cur_qso__['FREQ'] = self.__freq__
+            if seq[:-1] != '0':
+                self.__freq__ = f'{float(seq[:-1]) / 1000:0.6f}'.rstrip('0').rstrip('.')
+                self.__cur_qso__['FREQ'] = self.__freq__
+            else:
+                self.__freq__ = ''
+                self.__cur_qso__.pop('FREQ')
         elif seq.endswith('p'):
-            self.__pwr__ = seq[:-1]
-            self.__cur_qso__['TX_POWER'] = self.__pwr__
+            if seq[:-1] != '0':
+                self.__pwr__ = seq[:-1]
+                self.__cur_qso__['TX_POWER'] = self.__pwr__
+            else:
+                self.__pwr__ = ''
+                self.__cur_qso__.pop('TX_POWER')
         else:
             return 'Error: Unknown number format'
         return ''
