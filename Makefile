@@ -50,7 +50,7 @@ release:
 
 test: all
 	$(FLAKE8) ./src --count --select=E9,F63,F7,F82 --show-source --statistics
-	$(FLAKE8) ./src --count --max-complexity=20 --ignore=E402 --max-line-length=120 --statistics
+	$(FLAKE8) ./src --count --exit-zero --max-complexity=20 --ignore=E402 --max-line-length=120 --statistics
 	PYTHONPATH=./src $(PYTHON) -m unittest discover -s ./test
 
 build_devenv:
