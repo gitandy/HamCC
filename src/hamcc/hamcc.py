@@ -447,14 +447,14 @@ class CassiopeiaConsole:
                 self.__cur_qso__['FREQ'] = self.__freq__
             else:
                 self.__freq__ = ''
-                self.__cur_qso__.pop('FREQ')
+                self.__cur_qso__.pop('FREQ', '')
         elif seq.endswith('p'):
             if seq[:-1] != '0':
                 self.__pwr__ = seq[:-1]
                 self.__cur_qso__['TX_POWER'] = self.__pwr__
             else:
                 self.__pwr__ = ''
-                self.__cur_qso__.pop('TX_POWER')
+                self.__cur_qso__.pop('TX_POWER', '')
         else:
             return 'Error: Unknown number format'
         return ''
@@ -502,13 +502,19 @@ class CassiopeiaConsole:
             self.__my_call__ = seq[2:].upper()
             self.__cur_qso__['STATION_CALLSIGN'] = self.__my_call__
         elif seq.startswith('-l'):
+            if seq == '-l':
+                self.__cur_qso__.pop('MY_GRIDSQUARE', '')
+                self.__cur_qso__.pop('MY_CITY', '')
+                self.__my_loc__ = ''
+                self.__my_qth__ = ''
+                return ''
             if not self.check_format(self.REGEX_LOCATOR, seq[2:]) and not self.check_qth(seq[2:]):
                 return 'Error: Wrong QTH/maidenhead format'
             if self.check_format(self.REGEX_LOCATOR, seq[2:]):
                 self.__my_loc__ = seq[2:4].upper() + seq[4:]
                 self.__cur_qso__['MY_GRIDSQUARE'] = self.__my_loc__
                 if 'MY_CITY' in self.__cur_qso__:
-                    self.__cur_qso__.pop('MY_CITY')
+                    self.__cur_qso__.pop('MY_CITY', '')
                     self.__my_qth__ = ''
             else:
                 self.__my_qth__, self.__my_loc__ = self.check_qth(seq[2:])
@@ -516,6 +522,10 @@ class CassiopeiaConsole:
                 self.__cur_qso__['MY_GRIDSQUARE'] = self.__my_loc__
                 self.__cur_qso__['MY_CITY'] = self.__my_qth__
         elif seq.startswith('-n'):
+            if seq == '-n':
+                self.__cur_qso__.pop('MY_NAME', '')
+                self.__my_name__ = ''
+                return ''
             self.__my_name__ = seq[2:].replace('_', ' ')
             self.__cur_qso__['MY_NAME'] = self.__my_name__
         elif seq.startswith('-N'):  # Start contest qso ID
@@ -530,12 +540,16 @@ class CassiopeiaConsole:
         return ''
 
     def evaluate_locator(self, seq: str) -> str:
+        if seq == '':
+            self.__cur_qso__.pop('GRIDSQUARE', '')
+            self.__cur_qso__.pop('QTH', '')
+            return ''
+
         if not self.check_format(self.REGEX_LOCATOR, seq) and not self.check_qth(seq):
             return 'Error: Wrong QTH/maidenhead format'
         if self.check_format(self.REGEX_LOCATOR, seq):
             self.__cur_qso__['GRIDSQUARE'] = seq[:2].upper() + seq[2:]
-            if 'QTH' in self.__cur_qso__:
-                self.__cur_qso__.pop('QTH')
+            self.__cur_qso__.pop('QTH', '')
         else:
             qth, loc = self.check_qth(seq)
             self.__cur_qso__['GRIDSQUARE'] = loc[:2].upper() + loc[2:]
@@ -584,8 +598,14 @@ class CassiopeiaConsole:
             self.__cur_qso__['MODE'] = self.__mode__
             self.set_rst_default(self.__mode__)
         elif seq.startswith('#'):  # Comment
+            if seq == '#':
+                self.__cur_qso__.pop('COMMENT', '')
+                return ''
             self.__cur_qso__['COMMENT'] = seq[1:].replace('_', ' ')
         elif seq.startswith('\''):  # Name
+            if seq == '\'':
+                self.__cur_qso__.pop('NAME', '')
+                return ''
             self.__cur_qso__['NAME'] = seq[1:].replace('_', ' ')
         elif seq.startswith('@'):  # Locator
             return self.evaluate_locator(seq[1:])
@@ -639,5 +659,5 @@ class CassiopeiaConsole:
                 self.__cur_qso__['STX_STRING'] = f'{self.__event_ref__:03d}'
             except ValueError:
                 self.__event_ref__ = seq[2:].upper()
-                self.__cur_qso__.pop('STX')
+                self.__cur_qso__.pop('STX', '')
                 self.__cur_qso__['STX_STRING'] = self.__event_ref__

@@ -24,11 +24,13 @@ class TestCaseEvaluate(unittest.TestCase):
     def test_020_numeric(self):
         self.assertEqual('Error: Unknown number format', self.cc.evaluate('1o'))
 
+        self.assertEqual('', self.cc.evaluate('0p'))  # Test no exception
         self.assertEqual('', self.cc.evaluate('12p'))
         self.assertEqual('12', self.cc.current_qso['TX_POWER'])
         self.assertEqual('', self.cc.evaluate('0p'))
         self.assertNotIn('TX_POWER', self.cc.current_qso)
 
+        self.assertEqual('', self.cc.evaluate('0f'))  # Test no exception
         self.assertEqual('', self.cc.evaluate('14312f'))
         self.assertEqual('14.312', self.cc.current_qso['FREQ'])
         self.assertEqual('', self.cc.evaluate('145312.5f'))
@@ -103,9 +105,15 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('', self.cc.evaluate('#Comment'))
         self.assertEqual('Comment', self.cc.current_qso['COMMENT'])
 
+        self.assertEqual('', self.cc.evaluate('#'))
+        self.assertNotIn('COMMENT', self.cc.current_qso)
+
     def test_050_name(self):
         self.assertEqual('', self.cc.evaluate('\'Name'))
         self.assertEqual('Name', self.cc.current_qso['NAME'])
+
+        self.assertEqual('', self.cc.evaluate('\''))
+        self.assertNotIn('NAME', self.cc.current_qso)
 
     def test_060_locator(self):
         self.assertEqual('', self.cc.evaluate('@Test(AA11aa)'))
@@ -123,6 +131,10 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('AA11aa', self.cc.current_qso['GRIDSQUARE'])
         self.assertEqual('Error: Wrong QTH/maidenhead format', self.cc.evaluate('@TestAA22aa)'))
         self.assertEqual('AA11aa', self.cc.current_qso['GRIDSQUARE'])
+
+        self.assertEqual('', self.cc.evaluate('@'))
+        self.assertNotIn('GRIDSQUARE', self.cc.current_qso)
+        self.assertNotIn('QTH', self.cc.current_qso)
 
     def test_090_rst(self):
         self.assertEqual('', self.cc.evaluate('.44'))
@@ -192,11 +204,18 @@ class TestCaseEvaluate(unittest.TestCase):
         self.assertEqual('Error: Wrong QTH/maidenhead format', self.cc.evaluate('-lTestAA22aa)'))
         self.assertEqual('BB22bb', self.cc.current_qso['MY_GRIDSQUARE'])
 
+        self.assertEqual('', self.cc.evaluate('-l'))
+        self.assertNotIn('MY_GRIDSQUARE', self.cc.current_qso)
+        self.assertNotIn('MY_CITY', self.cc.current_qso)
+
     def test_124_extended_n(self):
         self.assertEqual('', self.cc.evaluate('-nTestuser'))
         self.assertEqual('Testuser', self.cc.current_qso['MY_NAME'])
         self.assertEqual('', self.cc.evaluate('-nTest_User'))
         self.assertEqual('Test User', self.cc.current_qso['MY_NAME'])
+
+        self.assertEqual('', self.cc.evaluate('-n'))
+        self.assertNotIn('MY_NAME', self.cc.current_qso)
 
     @unittest.expectedFailure
     def test_126_extended_N(self):
