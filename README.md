@@ -132,7 +132,7 @@ Types marked with auto are prefilled but can be overwritten. Types marked with m
 | Callsign     | xx9xx                    |         | format checked                                                  |
 | Locator/QTH  | @xx99xx or @QTH(Locator) |         | format checked                                                  |
 | Name         | 'xxxx                    |         | _ for spaces                                                    |
-| Comment      | #xxxx                    |         | _ for spaces                                                    |
+| Comment      | #xxxx                    | memory  | _ for spaces                                                    |
 | Band         | valid ADIF band          | memory  |                                                                 |
 | Mode         | valid ADIF mode          | memory  |                                                                 | 
 | RST rcvd     | .599                     | auto    | default CW 599, phone 59                                        |
@@ -143,8 +143,8 @@ Types marked with auto are prefilled but can be overwritten. Types marked with m
 | Time         | HHMMt                    | memory  | partly time will be filled                                      |
 | Date         | YYYYMMDDd                | memory  | partly date will be filled                                      |
 | Date/Time    | =                        | auto    | sync date/time to now                                           |
-| Frequency    | 99999f                   |         | in kHz                                                          |
-| TX Power     | 99p                      |         | in W                                                            | 
+| Frequency    | 99999f                   | memory  | in kHz                                                          |
+| TX Power     | 99p                      | memory  | in W                                                            | 
 | Your Call    | -cxx9xx                  | memory  |                                                                 | 
 | Your Locator | -lxx99xx                 | memory  |                                                                 | 
 | Your Name    | -nxxxx                   | memory  | _ for spaces                                                    |

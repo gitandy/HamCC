@@ -129,6 +129,7 @@ class CassiopeiaConsole:
         # Optional
         self.__freq__ = init_qso.get('FREQ', '')
         self.__pwr__ = init_qso.get('TX_PWR', '')
+        self.__comment__ = init_qso.get('COMMENT', '')
 
         # Special
         self.__event__ = event
@@ -242,6 +243,8 @@ class CassiopeiaConsole:
             self.__cur_qso__['TX_PWR'] = self.__pwr__
         if self.__freq__:
             self.__cur_qso__['FREQ'] = self.__freq__
+        if self.__comment__:
+            self.__cur_qso__['COMMENT'] = self.__comment__
 
         if self.__event__:
             self.clear_event()
@@ -274,6 +277,7 @@ class CassiopeiaConsole:
         # Optional
         self.__freq__ = ''
         self.__pwr__ = ''
+        self.__comment__ = ''
 
         # Special
         self.__event__ = ''
@@ -600,8 +604,10 @@ class CassiopeiaConsole:
         elif seq.startswith('#'):  # Comment
             if seq == '#':
                 self.__cur_qso__.pop('COMMENT', '')
+                self.__comment__ = ''
                 return ''
-            self.__cur_qso__['COMMENT'] = seq[1:].replace('_', ' ')
+            self.__comment__ = seq[1:].replace('_', ' ')
+            self.__cur_qso__['COMMENT'] = self.__comment__
         elif seq.startswith('\''):  # Name
             if seq == '\'':
                 self.__cur_qso__.pop('NAME', '')
