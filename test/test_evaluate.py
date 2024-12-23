@@ -26,9 +26,9 @@ class TestCaseEvaluate(unittest.TestCase):
 
         self.assertEqual('', self.cc.evaluate('0p'))  # Test no exception
         self.assertEqual('', self.cc.evaluate('12p'))
-        self.assertEqual('12', self.cc.current_qso['TX_POWER'])
+        self.assertEqual('12', self.cc.current_qso['TX_PWR'])
         self.assertEqual('', self.cc.evaluate('0p'))
-        self.assertNotIn('TX_POWER', self.cc.current_qso)
+        self.assertNotIn('TX_PWR', self.cc.current_qso)
 
         self.assertEqual('', self.cc.evaluate('0f'))  # Test no exception
         self.assertEqual('', self.cc.evaluate('14312f'))

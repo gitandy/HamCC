@@ -40,7 +40,7 @@ def qso2str(qso, pos, cnt) -> tuple[str, str]:
             (',', 'RST_SENT'),
             ('\'', 'NAME'),
             ('f', 'FREQ'),
-            ('p', 'TX_POWER'),
+            ('p', 'TX_PWR'),
             ('*', 'QSL_RCVD'),
             ('#', 'COMMENT'),
     ):
@@ -48,7 +48,7 @@ def qso2str(qso, pos, cnt) -> tuple[str, str]:
             val = qso[f]
             if f == 'FREQ':
                 val = f'{float(val) * 1000:0.3f}'.rstrip('0').rstrip('.')
-            if f in ('FREQ', 'TX_POWER'):
+            if f in ('FREQ', 'TX_PWR'):
                 opt_info += f'| {val} {i} '
             else:
                 opt_info += f'| {i} {val} '

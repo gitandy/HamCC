@@ -451,10 +451,10 @@ class CassiopeiaConsole:
         elif seq.endswith('p'):
             if seq[:-1] != '0':
                 self.__pwr__ = seq[:-1]
-                self.__cur_qso__['TX_POWER'] = self.__pwr__
+                self.__cur_qso__['TX_PWR'] = self.__pwr__
             else:
                 self.__pwr__ = ''
-                self.__cur_qso__.pop('TX_POWER', '')
+                self.__cur_qso__.pop('TX_PWR', '')
         else:
             return 'Error: Unknown number format'
         return ''
