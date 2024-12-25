@@ -78,7 +78,7 @@ Per default the file HamCC_log.adi in your user home will be used. If you are us
 new logs will be appended. 
 This behaviour and the file path can be changed via arguments (run HamCC -h for further information).
 
-Some graphical loggers (i.e. [DragonLog](https://github.com/gitandy/DragonLog?tab=readme-ov-file#dragonlog)) are 
+Some graphical loggers (e.g. [DragonLog](https://github.com/gitandy/DragonLog?tab=readme-ov-file#dragonlog)) are 
 able to watch for ADI file changes from other programs and immediately import new QSOs.
 
 ### Initial state
@@ -168,7 +168,7 @@ RST fields supports the whole range like `59` for phone, `599` for CW or `-06` f
 For CW the last digit can also be an `a` for aurora, `s` for scatter or alike 
 (see [R-S-T System](https://en.wikipedia.org/wiki/R-S-T_system) on Wikipedia).
 
-If you only give minutes to time i.e. `23t` the time will be filled with the last hour as if `1823t` was given 
+If you only give minutes to time e.g. `23t` the time will be filled with the last hour as if `1823t` was given 
 (assuming last time is something like 18:12 or so).
 For partial dates it will be filled in the same manner for each 2 digits missing from left to right. 
 So the date `240327d`, `0327d` or `27d` will be filled as if `20240327d` was given.
@@ -199,7 +199,7 @@ If it is a number it is stored as SRX and SRX_STRING. Else it is stored as SRX_S
 To leave the event mode for the following QSOs type a single `$` followed by a SPACE.
 
 #### xOTA
-For xOTA just enter one of SOTA, POTA i.e. `$pota` instead of the contest ID. 
+For xOTA just enter one of SOTA, POTA e.g. `$pota` instead of the contest ID. 
 Then set your own xOTA reference with `-Nxx-999` and track the QSO partners reference with `%xx-999`.
 
 Source Code
