@@ -1,3 +1,5 @@
+# Copyright 2024 by Andreas Schawo, licensed under CC BY-SA 4.0
+
 """Provide an API for logging Ham Radio QSOs via text input"""
 
 import os

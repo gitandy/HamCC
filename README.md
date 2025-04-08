@@ -202,6 +202,27 @@ To leave the event mode for the following QSOs type a single `$` followed by a S
 For xOTA just enter one of SOTA, POTA e.g. `$pota` instead of the contest ID. 
 Then set your own xOTA reference with `-Nxx-999` and track the QSO partners reference with `%xx-999`.
 
+Commandline support
+-------------------
+HamCC is also able to import QSOs from STDIN.
+
+    # echo -e "8 s df1asc 'Andreas 20241105d\n4 f df1asc 1202d" | hamcc --stdin
+
+or put the QSOs in a file (one QSO per line) 
+
+e.g. `qsos.txt` 
+
+    8 s df1asc 'Andreas 20241105d
+    4 f df1asc 1202d
+
+Commandline invokation
+
+    # hamcc --stdin < qsos.txt
+
+Another possibility is to use argument `-q` per QSO
+
+    # hamcc -q 8 s df1asc 'Andreas 20241105d -q 4 f df1asc 1202d 
+
 Source Code
 -----------
 The source code is available at [GitHub](https://github.com/gitandy/HamCC)
