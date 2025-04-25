@@ -37,3 +37,6 @@ hamcc = ["data/**"]
 
 [tool.setuptools.dynamic]
 version = {attr = "hamcc.__version__"}
+
+[tool.setuptools]
+license-files = []
