@@ -4,6 +4,7 @@
 
 import os
 import re
+import sys
 import json
 from copy import deepcopy
 import datetime
@@ -27,15 +28,25 @@ BANDS = __read_json__('data/bands.json')
 MODES = __read_json__('data/modes.json')
 
 
+def get_cur_adif_dt() -> tuple[str, str]:
+    """Get current date in ADIF format independant of Python version"""
+    if sys.version_info[0] == 3 and sys.version_info[1] < 11:
+        # noinspection PyDeprecation
+        dt = datetime.datetime.utcnow()
+    else:
+        dt = datetime.datetime.now(datetime.UTC)
+    return dt.strftime('%Y%m%d'), dt.strftime('%H%M')
+
+
 def adif_date2iso(date: str) -> str | None:
     if not date or len(date) != 8:
-        return
+        return None
     return date[:4] + '-' + date[4:6] + '-' + date[6:8]
 
 
 def adif_time2iso(time: str) -> str | None:
     if not time or len(time) != 4:
-        return
+        return None
     return time[:2] + ':' + time[2:4]
 
 
@@ -95,7 +106,7 @@ class CassiopeiaConsole:
 
     def __init__(self, my_call: str = '', my_loc: str = '', my_name: str = '',
                  event: str = '', event_ref: int = 1,
-                 init_qso: dict[str, str] = None, init_worked: dict[str, tuple[str, str]] = None):
+                 init_qso: dict[str, str] = None, init_worked: dict[str, tuple[str, str]] = None, online=False):
         logger.debug('Initialising...')
         if my_call and not self.check_format(self.REGEX_CALL, my_call):
             raise Exception('Wrong call format')
@@ -121,10 +132,16 @@ class CassiopeiaConsole:
             self.__my_name__ = my_name
 
         self.__qsos__: list[dict] = []
+        self.__online__ = online
 
         # Mandatory
-        self.__date__ = init_qso.get('QSO_DATE', datetime.datetime.utcnow().strftime('%Y%m%d'))
-        self.__time__ = init_qso.get('TIME_ON', datetime.datetime.utcnow().strftime('%H%M'))
+        date, time = get_cur_adif_dt()
+        self.__date__ = init_qso.get('QSO_DATE', date)
+        self.__time__ = init_qso.get('TIME_ON', time)
+        if self.__online__:
+            self.__date__ += '*'
+            self.__time__ += '*'
+
         self.__band__ = init_qso.get('BAND', '')
         self.__mode__ = init_qso.get('MODE', '')
 
@@ -153,8 +170,11 @@ class CassiopeiaConsole:
         self.__qso_active__ = False
         self.clear()
 
-    def is_sig(self):
+    def is_sig(self) -> bool:
         return self.__event__ in ('POTA', 'SOTA')
+
+    def is_online(self) -> bool:
+        return self.__online__
 
     def append_char(self, char: str) -> str:
         """Append a single char to the sequence stack
@@ -215,6 +235,8 @@ class CassiopeiaConsole:
         m = re.fullmatch(self.REGEX_QTH, qth_loc.strip())
         if m:
             return m.groups()[:2]
+        else:
+            return None
 
     def clear(self):
         """Clear current QSO (input cache)"""
@@ -222,6 +244,11 @@ class CassiopeiaConsole:
         self.__edit_pos__ = -1
         self.__qso_active__ = False
         self.__long_mode__ = False
+
+        if self.__online__:
+            date, time = get_cur_adif_dt()
+            self.__date__ = date + '*'
+            self.__time__ = time + '*'
 
         # Mandatory
         self.__cur_qso__ = {'STATION_CALLSIGN': self.__my_call__,
@@ -323,6 +350,12 @@ class CassiopeiaConsole:
                 res = f'Last QSO cached: {qso["CALL"]}'
             else:
                 res = 'Warning: Callsign missing for last QSO'
+
+            date, time = get_cur_adif_dt()
+            if '*' in qso['QSO_DATE']:
+                qso['QSO_DATE'] = date
+            if '*' in qso['TIME_ON']:
+                qso['TIME_ON'] = time
 
             if self.__edit_pos__ == -1:
                 self.__qsos__.append(qso)
@@ -534,6 +567,8 @@ class CassiopeiaConsole:
                 return ''
             self.__my_name__ = seq[2:].replace('_', ' ')
             self.__cur_qso__['MY_NAME'] = self.__my_name__
+        elif seq == '-o':
+            return self.set_online(not self.is_online())
         elif seq.startswith('-N'):  # Start contest qso ID
             if self.__event__:
                 self.evaluate_own_event_ref(seq)
@@ -544,6 +579,18 @@ class CassiopeiaConsole:
         else:
             return 'Error: Unknown prefix'
         return ''
+
+    def set_online(self, state: bool = True) -> str:
+        self.__online__ = state
+        date, time = get_cur_adif_dt()
+        self.__date__ = date
+        self.__time__ = time
+        if self.__online__:
+            self.__date__ += '*'
+            self.__time__ += '*'
+        self.__cur_qso__['QSO_DATE'] = self.__date__
+        self.__cur_qso__['TIME_ON'] = self.__time__
+        return 'Online mode' if self.is_online() else 'Offline mode'
 
     def evaluate_locator(self, seq: str) -> str:
         if seq == '':
@@ -631,8 +678,9 @@ class CassiopeiaConsole:
             else:
                 self.__cur_qso__['QSL_RCVD'] = 'Y'
         elif seq == '=':  # Sync date/time to now
-            self.__date__ = datetime.datetime.utcnow().strftime('%Y%m%d')
-            self.__time__ = datetime.datetime.utcnow().strftime('%H%M')
+            date, time = get_cur_adif_dt()
+            self.__date__ = date
+            self.__time__ = time
             self.__cur_qso__['QSO_DATE'] = self.__date__
             self.__cur_qso__['TIME_ON'] = self.__time__
         elif seq[0] == '-':  # different extended infos and commands

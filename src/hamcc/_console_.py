@@ -31,8 +31,12 @@ LN_INFO = 3
 
 
 def qso2str(qso, pos, cnt) -> tuple[str, str]:
-    d = adif_date2iso(qso["QSO_DATE"])
-    t = adif_time2iso(qso["TIME_ON"])
+    d = adif_date2iso(qso['QSO_DATE'][:8])
+    t = adif_time2iso(qso['TIME_ON'][:4])
+    if '*' in qso['QSO_DATE']:
+        d += '*'
+    if '*' in qso['TIME_ON']:
+        t += '*'
 
     opt_info = ''
     for i, f in (
@@ -89,8 +93,11 @@ def read_adi(file: str) -> tuple[dict[str, str], dict[str, tuple[str, str]]]:
 
 
 def command_console(stdscr, file, own_call, own_loc, own_name, append=False,  # noqa: C901
-                    contest_id='', qso_number=1, records: list = []):
+                    contest_id='', qso_number=1, records: list = None, online=False):
     adi_f = None
+    if records is None:
+        records = []
+
     try:
         fmode = 'a' if append else 'w'
         fexists = os.path.isfile(file)
@@ -118,7 +125,7 @@ def command_console(stdscr, file, own_call, own_loc, own_name, append=False,  # 
         if records:
             last_qso = records[-1]
 
-        cc = CassiopeiaConsole(own_call, own_loc, own_name, contest_id, qso_number, last_qso, worked_calls)
+        cc = CassiopeiaConsole(own_call, own_loc, own_name, contest_id, qso_number, last_qso, worked_calls, online)
         if records:
             logger.info('Loading QSOs...')
             for r in records:
@@ -233,9 +240,9 @@ def command_console(stdscr, file, own_call, own_loc, own_name, append=False,  # 
             logger.info('Closed ADIF file')
 
 
-def run_console(file, own_call, own_loc, own_name, overwrite, event, exchange, records):
+def run_console(file, own_call, own_loc, own_name, overwrite, event, exchange, records, online=False):
     if os.name == 'nt':
         os.system("mode con cols=120 lines=25")
 
     wrapper(command_console, file, own_call, own_loc, own_name,
-            not overwrite, event, exchange, records)
+            not overwrite, event, exchange, records, online)

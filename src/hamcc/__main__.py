@@ -131,6 +131,8 @@ def main():
                         help='your locator and QTH i.e. "JO30uj" or "Eitelborn(JO30uj)"')
     parser.add_argument('-n', '--name', dest='own_name', default='',
                         help='your name')
+    parser.add_argument('-o', '--online', dest='online', action='store_true',
+                        help='set online mode at startup (console only)')
     parser.add_argument('-E', '--event', dest='event', default='',
                         help='the event (contest ID or one of POTA, SOTA) to activate at startup')
     parser.add_argument('-N', '--exchange', dest='exchange', default=1,
@@ -156,7 +158,7 @@ def main():
         logger.addHandler(stderr_handler)
         logging.getLogger('hamcc').addHandler(stderr_handler)
 
-        qsos =  sys.stdin if args.stdin else args.qso
+        qsos = sys.stdin if args.stdin else args.qso
         process_qsos(qsos, args.file, args.own_call, args.own_loc, args.own_name,
                      not args.overwrite, args.event, args.exchange)
     else:
@@ -176,7 +178,7 @@ def main():
                 records = doc['RECORDS']
 
         run_console(args.file, args.own_call, args.own_loc, args.own_name,
-                    args.overwrite, args.event, args.exchange, records)
+                    args.overwrite, args.event, args.exchange, records, args.online)
 
         logger.info('Stopped console')
 

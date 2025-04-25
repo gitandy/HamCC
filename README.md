@@ -127,32 +127,33 @@ The table shows all available pre- and postfixes. The following will work for AP
 Placeholder x for characters and 9 for numbers.
 Types marked with auto are prefilled but can be overwritten. Types marked with memory are retained for the session.
 
-| Info         | Format                   | Type    | Comments                                                        |
-|--------------|--------------------------|---------|-----------------------------------------------------------------|
-| Callsign     | xx9xx                    |         | format checked                                                  |
-| Locator/QTH  | @xx99xx or @QTH(Locator) |         | format checked                                                  |
-| Name         | 'xxxx                    |         | _ for spaces                                                    |
-| Comment      | #xxxx                    | memory  | _ for spaces                                                    |
-| Band         | valid ADIF band          | memory  |                                                                 |
-| Mode         | valid ADIF mode          | memory  |                                                                 | 
-| RST rcvd     | .599                     | auto    | default CW 599, phone 59                                        |
-| RST sent     | ,599                     | auto    | default CW 599, phone 59                                        |
-| QSL rcvd     | *                        |         | toggles the information                                         |
-| Event ID     | $xxxxxx                  | memory  | Contest ID or one of POTA, SOTA                                 |
-| Rcvd Exch    | %xxxxx                   |         | Contest exchange or xOTA reference                              |
-| Time         | HHMMt                    | memory  | partly time will be filled                                      |
-| Date         | YYYYMMDDd                | memory  | partly date will be filled                                      |
-| Date/Time    | =                        | auto    | sync date/time to now                                           |
-| Frequency    | 99999f                   | memory  | in kHz                                                          |
-| TX Power     | 99p                      | memory  | in W                                                            | 
-| Your Call    | -cxx9xx                  | memory  |                                                                 | 
-| Your Locator | -lxx99xx                 | memory  |                                                                 | 
-| Your Name    | -nxxxx                   | memory  | _ for spaces                                                    |
-| Finish QSO   | linefeed                 | command | ENTER-Key                                                       |
-| Clear QSO    | ~                        | command | clears input not cached QSO                                     |
-| Show QSO     | ?                        | command |                                                                 |
-| Sent Exch    | -N9 or -Nxx              | auto    | set start value (if number) for contest QSO No. or own xOTA ref |
-| Show version | -V                       | command |                                                                 |
+| Info          | Format                   | Type    | Comments                                                        |
+|---------------|--------------------------|---------|-----------------------------------------------------------------|
+| Callsign      | xx9xx                    |         | format checked                                                  |
+| Locator/QTH   | @xx99xx or @QTH(Locator) |         | format checked                                                  |
+| Name          | 'xxxx                    |         | _ for spaces                                                    |
+| Comment       | #xxxx                    | memory  | _ for spaces                                                    |
+| Band          | valid ADIF band          | memory  |                                                                 |
+| Mode          | valid ADIF mode          | memory  |                                                                 | 
+| RST rcvd      | .599                     | auto    | default CW 599, phone 59                                        |
+| RST sent      | ,599                     | auto    | default CW 599, phone 59                                        |
+| QSL rcvd      | *                        |         | toggles the information                                         |
+| Event ID      | $xxxxxx                  | memory  | Contest ID or one of POTA, SOTA                                 |
+| Rcvd Exch     | %xxxxx                   |         | Contest exchange or xOTA reference                              |
+| Time          | HHMMt                    | memory  | partly time will be filled                                      |
+| Date          | YYYYMMDDd                | memory  | partly date will be filled                                      |
+| Date/Time     | =                        | auto    | sync date/time to now (overwrites online mode for current QSO)  |
+| Frequency     | 99999f                   | memory  | in kHz                                                          |
+| TX Power      | 99p                      | memory  | in W                                                            | 
+| Your Call     | -cxx9xx                  | memory  |                                                                 | 
+| Your Locator  | -lxx99xx                 | memory  |                                                                 | 
+| Your Name     | -nxxxx                   | memory  | _ for spaces                                                    |
+| Finish QSO    | linefeed                 | command | ENTER-Key                                                       |
+| Clear QSO     | ~                        | command | clears input not cached QSO                                     |
+| Show QSO      | ?                        | command |                                                                 |
+| Sent Exch     | -N9 or -Nxx              | auto    | set start value (if number) for contest QSO No. or own xOTA ref |
+| Toggle online | -o                       | command | toggles online (automatic date/time at saving) and offline      |
+| Show version  | -V                       | command |                                                                 |
 
 For callsigns, mode, locators, RST and contest id lowercase will be converted to uppecase.
 
