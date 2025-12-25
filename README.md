@@ -1,3 +1,6 @@
+**Repository moved to [Codeberg](https://codeberg.org/dragoncode/HamCC)**
+
+
 HamCC - CassiopeiaConsole
 =========================
 
